@@ -1,0 +1,1112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Faraid Planner — Islamic Estate & Inheritance System</title>
+
+    <meta
+        name="description"
+        content="Islamic estate and Faraid planning system for recording estates, identifying heirs, reviewing inheritance rules and creating a property distribution blueprint."
+    >
+
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+
+<body>
+
+<header class="site-header">
+    <div class="container nav-container">
+
+        <a href="#" class="brand">
+            Faraid Planner<span>.</span>
+        </a>
+
+        <nav class="main-nav">
+            <a href="#dashboard">Dashboard</a>
+            <a href="#estate">Estate</a>
+            <a href="#heirs">Heirs</a>
+            <a href="#faraid">Faraid</a>
+            <a href="#property">Properties</a>
+            <a href="#actions">Actions</a>
+            <a href="#blueprint">Blueprint</a>
+        </nav>
+
+    </div>
+</header>
+
+
+<main>
+
+    <!-- HERO -->
+
+    <section class="hero">
+        <div class="container hero-grid">
+
+            <div class="hero-content">
+
+                <div class="eyebrow">
+                    ISLAMIC ESTATE & FARAID PLANNER
+                </div>
+
+                <h1>
+                    From estate inventory
+                    to final distribution.
+                </h1>
+
+                <p>
+                    A blueprint-first system for Islamic inheritance.
+                    Record the estate, establish obligations, identify
+                    heirs, determine the Faraid framework, plan physical
+                    property allocation and track the steps required for
+                    completion.
+                </p>
+
+                <div class="hero-actions">
+                    <a href="#estate" class="btn btn-primary">
+                        Start Estate Case
+                    </a>
+
+                    <button
+                        type="button"
+                        class="btn btn-secondary"
+                        id="loadCaseHeroBtn"
+                    >
+                        Load Saved Case
+                    </button>
+                </div>
+
+            </div>
+
+            <div class="hero-card">
+
+                <div class="arabic">
+                    مِيرَاثٌ وَفَرَائِض
+                </div>
+
+                <h2>
+                    Entitlement is not the same as property.
+                </h2>
+
+                <p>
+                    Faraid establishes inheritance entitlement.
+                    The estate inventory records what exists.
+                    The settlement plan determines how physical
+                    properties may be handled.
+                </p>
+
+            </div>
+
+        </div>
+    </section>
+
+
+    <div class="container">
+
+        <!-- DASHBOARD -->
+
+        <section id="dashboard" class="section">
+
+            <div class="section-heading">
+                <div>
+                    <div class="eyebrow">CASE MANAGEMENT</div>
+
+                    <h2>
+                        Estate Case Dashboard
+                    </h2>
+
+                    <p>
+                        Track the progress of the inheritance case.
+                    </p>
+                </div>
+
+                <div class="button-group">
+
+                    <button
+                        type="button"
+                        class="btn btn-primary"
+                        id="saveCaseBtn"
+                    >
+                        Save Case
+                    </button>
+
+                    <button
+                        type="button"
+                        class="btn btn-secondary"
+                        id="loadCaseBtn"
+                    >
+                        Load Case
+                    </button>
+
+                    <button
+                        type="button"
+                        class="btn btn-danger"
+                        id="newCaseBtn"
+                    >
+                        New Case
+                    </button>
+
+                </div>
+            </div>
+
+
+            <div class="dashboard-grid">
+
+                <div class="card case-information">
+
+                    <h3>Case Information</h3>
+
+                    <div class="form-grid">
+
+                        <div class="form-group">
+                            <label for="caseName">
+                                Case Name
+                            </label>
+
+                            <input
+                                id="caseName"
+                                type="text"
+                                placeholder="Estate of Ahmad Ibrahim"
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label for="deceasedName">
+                                Deceased
+                            </label>
+
+                            <input
+                                id="deceasedName"
+                                type="text"
+                                placeholder="Full legal name"
+                            >
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <div class="card">
+
+                    <h3>Case Status</h3>
+
+                    <div class="status-large" id="caseStatus">
+                        Planning
+                    </div>
+
+                    <p class="muted">
+                        Status updates automatically as the case develops.
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <div class="progress-card card">
+
+                <h3>Case Progress</h3>
+
+                <div
+                    id="progress"
+                    class="progress-grid"
+                ></div>
+
+            </div>
+
+
+            <div class="statistics-grid">
+
+                <div class="stat-card">
+                    <span>Estate Assets</span>
+                    <strong id="assetCount">0</strong>
+                </div>
+
+                <div class="stat-card">
+                    <span>Heir Groups</span>
+                    <strong id="heirCount">0</strong>
+                </div>
+
+                <div class="stat-card">
+                    <span>Open Actions</span>
+                    <strong id="openActionCount">0</strong>
+                </div>
+
+                <div class="stat-card">
+                    <span>Review Flags</span>
+                    <strong id="reviewFlagCount">0</strong>
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- ESTATE -->
+
+        <section id="estate" class="section">
+
+            <div class="section-heading">
+                <div>
+                    <div class="eyebrow">
+                        STAGE 1
+                    </div>
+
+                    <h2>
+                        Estate Identification
+                    </h2>
+
+                    <p>
+                        Record assets without requiring a cash valuation.
+                    </p>
+                </div>
+            </div>
+
+
+            <div class="notice notice-info">
+
+                <strong>Purpose of this stage</strong>
+
+                <p>
+                    Establish what belonged to the deceased.
+                    Values can remain unknown until a professional
+                    valuation is available.
+                </p>
+
+            </div>
+
+
+            <div class="card">
+
+                <h3>Deceased Information</h3>
+
+                <div class="form-grid">
+
+                    <div class="form-group">
+                        <label for="deathDate">
+                            Date of Death
+                        </label>
+
+                        <input
+                            id="deathDate"
+                            type="date"
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="jurisdiction">
+                            Country / Jurisdiction
+                        </label>
+
+                        <input
+                            id="jurisdiction"
+                            type="text"
+                            placeholder="Ghana"
+                        >
+                    </div>
+
+                    <div class="form-group full-width">
+                        <label for="administrator">
+                            Estate Administrator / Contact
+                        </label>
+
+                        <input
+                            id="administrator"
+                            type="text"
+                            placeholder="Name and contact information"
+                        >
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <div class="card">
+
+                <div class="section-heading compact">
+
+                    <div>
+                        <h3>
+                            Estate Assets
+                        </h3>
+
+                        <p>
+                            Houses, land, vehicles, businesses,
+                            money, investments and other property.
+                        </p>
+                    </div>
+
+                    <button
+                        type="button"
+                        class="btn btn-secondary"
+                        id="addAssetBtn"
+                    >
+                        + Add Asset
+                    </button>
+
+                </div>
+
+                <div id="assetsContainer"></div>
+
+            </div>
+
+
+            <div class="card">
+
+                <h3>
+                    Ownership Verification
+                </h3>
+
+                <div class="checklist">
+
+                    <label class="check-item">
+                        <input
+                            type="checkbox"
+                            data-check="ownership"
+                        >
+                        <span>
+                            Ownership documents have been collected
+                            where available.
+                        </span>
+                    </label>
+
+                    <label class="check-item">
+                        <input
+                            type="checkbox"
+                            data-check="jointOwnership"
+                        >
+                        <span>
+                            Jointly owned property has been identified.
+                        </span>
+                    </label>
+
+                    <label class="check-item">
+                        <input
+                            type="checkbox"
+                            data-check="assetSearch"
+                        >
+                        <span>
+                            Reasonable steps have been taken to identify
+                            undisclosed assets.
+                        </span>
+                    </label>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- OBLIGATIONS -->
+
+        <section id="obligations" class="section">
+
+            <div class="section-heading">
+
+                <div>
+                    <div class="eyebrow">
+                        STAGE 2
+                    </div>
+
+                    <h2>
+                        Debts, Obligations & Wasiyyah
+                    </h2>
+
+                    <p>
+                        Establish obligations before distributing
+                        the inheritable estate.
+                    </p>
+                </div>
+
+            </div>
+
+
+            <div class="card">
+
+                <div class="form-group">
+                    <label for="debts">
+                        Debts and Other Obligations
+                    </label>
+
+                    <textarea
+                        id="debts"
+                        placeholder="Creditors, descriptions, documentation and amounts where known."
+                    ></textarea>
+                </div>
+
+
+                <div class="form-group">
+                    <label for="funeralExpenses">
+                        Funeral / Burial Expenses
+                    </label>
+
+                    <textarea
+                        id="funeralExpenses"
+                        placeholder="Record known expenses and supporting documents."
+                    ></textarea>
+                </div>
+
+
+                <div class="form-group">
+                    <label for="wasiyyah">
+                        Wasiyyah / Bequests
+                    </label>
+
+                    <textarea
+                        id="wasiyyah"
+                        placeholder="Record the document, beneficiaries and proposed bequests."
+                    ></textarea>
+                </div>
+
+            </div>
+
+
+            <div class="card">
+
+                <h3>
+                    Obligation Checklist
+                </h3>
+
+                <div class="checklist">
+
+                    <label class="check-item">
+                        <input
+                            type="checkbox"
+                            data-check="debts"
+                        >
+                        <span>
+                            Debts have been identified and documented.
+                        </span>
+                    </label>
+
+                    <label class="check-item">
+                        <input
+                            type="checkbox"
+                            data-check="funeral"
+                        >
+                        <span>
+                            Funeral and burial expenses have been documented.
+                        </span>
+                    </label>
+
+                    <label class="check-item">
+                        <input
+                            type="checkbox"
+                            data-check="wasiyyah"
+                        >
+                        <span>
+                            Wasiyyah has been located and referred
+                            for Islamic/legal review.
+                        </span>
+                    </label>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- HEIRS -->
+
+        <section id="heirs" class="section">
+
+            <div class="section-heading">
+
+                <div>
+                    <div class="eyebrow">
+                        STAGE 3
+                    </div>
+
+                    <h2>
+                        Surviving Heirs
+                    </h2>
+
+                    <p>
+                        Establish the family facts before applying
+                        the inheritance framework.
+                    </p>
+                </div>
+
+            </div>
+
+
+            <div class="card">
+
+                <div class="heir-grid">
+
+                    <!-- Spouse -->
+
+                    <div class="heir-card">
+
+                        <h3>Spouse</h3>
+
+                        <div class="form-group">
+
+                            <label for="husband">
+                                Husband
+                            </label>
+
+                            <select id="husband">
+                                <option value="0">No</option>
+                                <option value="1">Yes</option>
+                            </select>
+
+                        </div>
+
+                        <div class="form-group">
+
+                            <label for="wives">
+                                Number of Wives
+                            </label>
+
+                            <input
+                                id="wives"
+                                type="number"
+                                min="0"
+                                value="0"
+                            >
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- Children -->
+
+                    <div class="heir-card">
+
+                        <h3>Children</h3>
+
+                        <div class="form-group">
+
+                            <label for="sons">
+                                Sons
+                            </label>
+
+                            <input
+                                id="sons"
+                                type="number"
+                                min="0"
+                                value="0"
+                            >
+
+                        </div>
+
+                        <div class="form-group">
+
+                            <label for="daughters">
+                                Daughters
+                            </label>
+
+                            <input
+                                id="daughters"
+                                type="number"
+                                min="0"
+                                value="0"
+                            >
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- Parents -->
+
+                    <div class="heir-card">
+
+                        <h3>Parents</h3>
+
+                        <div class="form-group">
+
+                            <label for="father">
+                                Father
+                            </label>
+
+                            <select id="father">
+                                <option value="0">No</option>
+                                <option value="1">Yes</option>
+                            </select>
+
+                        </div>
+
+                        <div class="form-group">
+
+                            <label for="mother">
+                                Mother
+                            </label>
+
+                            <select id="mother">
+                                <option value="0">No</option>
+                                <option value="1">Yes</option>
+                            </select>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- Grandparents -->
+
+                    <div class="heir-card">
+
+                        <h3>Grandparents</h3>
+
+                        <div class="form-group">
+
+                            <label for="paternalGrandfather">
+                                Paternal Grandfather
+                            </label>
+
+                            <select id="paternalGrandfather">
+                                <option value="0">No</option>
+                                <option value="1">Yes</option>
+                            </select>
+
+                        </div>
+
+                        <div class="form-group">
+
+                            <label for="maternalGrandmother">
+                                Maternal Grandmother
+                            </label>
+
+                            <select id="maternalGrandmother">
+                                <option value="0">No</option>
+                                <option value="1">Yes</option>
+                            </select>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- Siblings -->
+
+                    <div class="heir-card">
+
+                        <h3>Full Siblings</h3>
+
+                        <div class="form-group">
+
+                            <label for="fullBrothers">
+                                Full Brothers
+                            </label>
+
+                            <input
+                                id="fullBrothers"
+                                type="number"
+                                min="0"
+                                value="0"
+                            >
+
+                        </div>
+
+                        <div class="form-group">
+
+                            <label for="fullSisters">
+                                Full Sisters
+                            </label>
+
+                            <input
+                                id="fullSisters"
+                                type="number"
+                                min="0"
+                                value="0"
+                            >
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- Maternal siblings -->
+
+                    <div class="heir-card">
+
+                        <h3>Other Relatives</h3>
+
+                        <div class="form-group">
+
+                            <label for="maternalSiblings">
+                                Maternal Siblings
+                            </label>
+
+                            <input
+                                id="maternalSiblings"
+                                type="number"
+                                min="0"
+                                value="0"
+                            >
+
+                        </div>
+
+                        <div class="form-group">
+
+                            <label for="sonGrandchildren">
+                                Grandchildren Through Son
+                            </label>
+
+                            <select id="sonGrandchildren">
+                                <option value="0">No</option>
+                                <option value="1">Yes</option>
+                            </select>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <div class="button-group">
+
+                    <button
+                        type="button"
+                        class="btn btn-primary"
+                        id="determineFaraidBtn"
+                    >
+                        Determine Faraid Framework
+                    </button>
+
+                </div>
+
+            </div>
+
+
+            <div id="faraidResult"></div>
+
+        </section>
+
+
+        <!-- PROPERTY -->
+
+        <section id="property" class="section">
+
+            <div class="section-heading">
+
+                <div>
+                    <div class="eyebrow">
+                        STAGE 4
+                    </div>
+
+                    <h2>
+                        Property Allocation Plan
+                    </h2>
+
+                    <p>
+                        Decide how each physical property may be handled
+                        while preserving established entitlements.
+                    </p>
+                </div>
+
+                <button
+                    type="button"
+                    class="btn btn-secondary"
+                    id="addPropertyPlanBtn"
+                >
+                    + Add Property Plan
+                </button>
+
+            </div>
+
+
+            <div class="notice notice-warning">
+
+                <strong>Important distinction</strong>
+
+                <p>
+                    Faraid establishes entitlement to the estate.
+                    It does not automatically require every physical
+                    asset to be sold or physically divided.
+                </p>
+
+            </div>
+
+
+            <div class="card">
+
+                <div id="propertyPlansContainer"></div>
+
+            </div>
+
+        </section>
+
+
+        <!-- ACTIONS -->
+
+        <section id="actions" class="section">
+
+            <div class="section-heading">
+
+                <div>
+                    <div class="eyebrow">
+                        STAGE 5
+                    </div>
+
+                    <h2>
+                        Action Tracker
+                    </h2>
+
+                    <p>
+                        Unresolved issues become explicit actions.
+                    </p>
+                </div>
+
+            </div>
+
+
+            <div class="card">
+
+                <div id="actionsList"></div>
+
+            </div>
+
+        </section>
+
+
+        <!-- AGREEMENT -->
+
+        <section id="agreement" class="section">
+
+            <div class="section-heading">
+
+                <div>
+                    <div class="eyebrow">
+                        STAGE 6
+                    </div>
+
+                    <h2>
+                        Family Agreement & Settlement
+                    </h2>
+
+                    <p>
+                        Record the practical settlement after entitlement
+                        has been established.
+                    </p>
+                </div>
+
+            </div>
+
+
+            <div class="card">
+
+                <div class="form-group">
+
+                    <label for="settlementNotes">
+                        Settlement Notes
+                    </label>
+
+                    <textarea
+                        id="settlementNotes"
+                        placeholder="Record the proposed allocation, sale decisions, joint ownership arrangements and consent of heirs."
+                    ></textarea>
+
+                </div>
+
+
+                <div class="form-grid">
+
+                    <div class="form-group">
+
+                        <label for="scholarReviewer">
+                            Islamic Scholar / Faraid Reviewer
+                        </label>
+
+                        <input
+                            id="scholarReviewer"
+                            type="text"
+                            placeholder="Name / contact"
+                        >
+
+                    </div>
+
+
+                    <div class="form-group">
+
+                        <label for="legalReviewer">
+                            Legal Adviser / Notary
+                        </label>
+
+                        <input
+                            id="legalReviewer"
+                            type="text"
+                            placeholder="Name / contact"
+                        >
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <div class="card">
+
+                <h3>
+                    Completion Checklist
+                </h3>
+
+                <div class="checklist">
+
+                    <label class="check-item">
+                        <input
+                            type="checkbox"
+                            data-check="scholarReview"
+                        >
+                        <span>
+                            Faraid determination reviewed by a qualified
+                            Islamic scholar.
+                        </span>
+                    </label>
+
+                    <label class="check-item">
+                        <input
+                            type="checkbox"
+                            data-check="heirNotification"
+                        >
+                        <span>
+                            Heirs have been informed of their established
+                            entitlements.
+                        </span>
+                    </label>
+
+                    <label class="check-item">
+                        <input
+                            type="checkbox"
+                            data-check="settlementAgreement"
+                        >
+                        <span>
+                            Property settlement has been documented.
+                        </span>
+                    </label>
+
+                    <label class="check-item">
+                        <input
+                            type="checkbox"
+                            data-check="legalTransfer"
+                        >
+                        <span>
+                            Required legal transfers and registrations
+                            have been completed.
+                        </span>
+                    </label>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- BLUEPRINT -->
+
+        <section id="blueprint" class="section">
+
+            <div class="section-heading">
+
+                <div>
+                    <div class="eyebrow">
+                        STAGE 7
+                    </div>
+
+                    <h2>
+                        Faraid Estate Distribution Blueprint
+                    </h2>
+
+                    <p>
+                        Generate a structured case summary suitable
+                        for review and printing.
+                    </p>
+
+                </div>
+
+                <div class="button-group">
+
+                    <button
+                        type="button"
+                        class="btn btn-primary"
+                        id="generateBlueprintBtn"
+                    >
+                        Generate Blueprint
+                    </button>
+
+                    <button
+                        type="button"
+                        class="btn btn-secondary"
+                        id="printBlueprintBtn"
+                    >
+                        Print Blueprint
+                    </button>
+
+                </div>
+
+            </div>
+
+
+            <div
+                id="blueprintOutput"
+                class="blueprint"
+            >
+
+                <div class="empty-state">
+
+                    <h3>
+                        Blueprint not generated
+                    </h3>
+
+                    <p>
+                        Complete the relevant case information and
+                        generate the blueprint.
+                    </p>
+
+                </div>
+
+            </div>
+
+        </section>
+
+    </div>
+
+</main>
+
+
+<footer class="site-footer">
+
+    <div class="container">
+
+        <strong>
+            Faraid Planner.
+        </strong>
+
+        <p>
+            Islamic Estate & Inheritance Planning System
+        </p>
+
+        <p class="footer-disclaimer">
+
+            This application is a planning and educational tool.
+            It does not constitute a fatwa, Islamic legal opinion,
+            legal advice or a final inheritance determination.
+            Complex inheritance cases should be reviewed by a
+            qualified Islamic scholar and, where necessary,
+            an appropriate legal professional.
+
+        </p>
+
+    </div>
+
+</footer>
+
+
+<script type="module" src="js/app.js"></script>
+
+</body>
+</html>
