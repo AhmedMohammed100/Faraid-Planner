@@ -1,0 +1,240 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "title": "Faraid Planner Case",
+    "type": "object",
+
+    "required": [
+        "schemaVersion",
+        "caseName",
+        "deceased",
+        "estate",
+        "obligations",
+        "family",
+        "propertyPlans",
+        "settlement"
+    ],
+
+    "properties": {
+
+        "schemaVersion": {
+            "type": "integer"
+        },
+
+        "caseName": {
+            "type": "string"
+        },
+
+        "deceased": {
+
+            "type": "object",
+
+            "properties": {
+
+                "name": {
+                    "type": "string"
+                },
+
+                "deathDate": {
+                    "type": "string"
+                },
+
+                "jurisdiction": {
+                    "type": "string"
+                },
+
+                "administrator": {
+                    "type": "string"
+                }
+
+            }
+        },
+
+        "estate": {
+
+            "type": "object",
+
+            "properties": {
+
+                "assets": {
+
+                    "type": "array",
+
+                    "items": {
+
+                        "type": "object",
+
+                        "required": [
+                            "name",
+                            "type"
+                        ],
+
+                        "properties": {
+
+                            "name": {
+                                "type": "string"
+                            },
+
+                            "type": {
+                                "type": "string"
+                            },
+
+                            "notes": {
+                                "type": "string"
+                            }
+
+                        }
+
+                    }
+
+                }
+
+            }
+
+        },
+
+        "obligations": {
+
+            "type": "object",
+
+            "properties": {
+
+                "debts": {
+                    "type": "string"
+                },
+
+                "funeralExpenses": {
+                    "type": "string"
+                },
+
+                "wasiyyah": {
+                    "type": "string"
+                }
+
+            }
+
+        },
+
+        "family": {
+
+            "type": "object",
+
+            "properties": {
+
+                "husband": {
+                    "type": "boolean"
+                },
+
+                "wives": {
+                    "type": "integer",
+                    "minimum": 0
+                },
+
+                "sons": {
+                    "type": "integer",
+                    "minimum": 0
+                },
+
+                "daughters": {
+                    "type": "integer",
+                    "minimum": 0
+                },
+
+                "father": {
+                    "type": "boolean"
+                },
+
+                "mother": {
+                    "type": "boolean"
+                },
+
+                "paternalGrandfather": {
+                    "type": "boolean"
+                },
+
+                "maternalGrandmother": {
+                    "type": "boolean"
+                },
+
+                "fullBrothers": {
+                    "type": "integer",
+                    "minimum": 0
+                },
+
+                "fullSisters": {
+                    "type": "integer",
+                    "minimum": 0
+                },
+
+                "maternalSiblings": {
+                    "type": "integer",
+                    "minimum": 0
+                },
+
+                "sonGrandchildren": {
+                    "type": "boolean"
+                }
+
+            }
+
+        },
+
+        "propertyPlans": {
+
+            "type": "array",
+
+            "items": {
+
+                "type": "object",
+
+                "properties": {
+
+                    "property": {
+                        "type": "string"
+                    },
+
+                    "method": {
+                        "type": "string"
+                    },
+
+                    "notes": {
+                        "type": "string"
+                    }
+
+                }
+
+            }
+
+        },
+
+        "settlement": {
+
+            "type": "object",
+
+            "properties": {
+
+                "notes": {
+                    "type": "string"
+                },
+
+                "scholarReviewer": {
+                    "type": "string"
+                },
+
+                "legalReviewer": {
+                    "type": "string"
+                }
+
+            }
+
+        },
+
+        "faraidResult": {
+            "type": [
+                "object",
+                "null"
+            ]
+        }
+
+    }
+
+}
