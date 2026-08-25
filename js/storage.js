@@ -1,596 +1,244 @@
 /*
- * Faraid Engine
+ * Faraid Planner - Browser Storage
  *
- * This module intentionally contains no DOM manipulation.
- *
- * Its responsibility is to receive structured family facts and return
- * a structured Faraid framework.
- *
- * It does NOT attempt to silently resolve every jurisprudential case.
- * Unsupported or complex cases are returned as review flags.
+ * Stores the user's inheritance case locally in the browser.
+ * This file is deliberately separate from the Faraid calculation engine.
  */
 
-
-export const FARAID_ENGINE_VERSION = "0.1.0";
+export const STORAGE_VERSION = 1;
+export const STORAGE_KEY = "faraid-planner-case-v1";
 
 
 /**
- * Convert common UI values into boolean.
+ * Create a completely new empty inheritance case.
  */
-function toBoolean(value) {
-    return value === true ||
-        value === 1 ||
-        value === "1";
-}
-
-
-/**
- * Safely convert a number.
- */
-function toCount(value) {
-    const number = Number(value);
-
-    if (!Number.isFinite(number)) {
-        return 0;
-    }
-
-    return Math.max(0, Math.floor(number));
-}
-
-
-/**
- * Normalise the family input.
- */
-export function normalizeFamily(input = {}) {
-
+export function createEmptyCase() {
     return {
-        husband: toBoolean(input.husband),
+        schemaVersion: STORAGE_VERSION,
 
-        wives: toCount(input.wives),
+        caseName: "",
 
-        sons: toCount(input.sons),
+        deceased: {
+            name: "",
+            deathDate: "",
+            jurisdiction: "",
+            administrator: ""
+        },
 
-        daughters: toCount(input.daughters),
+        estate: {
+            assets: []
+        },
 
-        father: toBoolean(input.father),
+        obligations: {
+            debts: "",
+            funeralExpenses: "",
+            wasiyyah: ""
+        },
 
-        mother: toBoolean(input.mother),
+        family: {
+            husband: false,
+            wives: 0,
 
-        paternalGrandfather:
-            toBoolean(input.paternalGrandfather),
+            sons: 0,
+            daughters: 0,
 
-        maternalGrandmother:
-            toBoolean(input.maternalGrandmother),
+            father: false,
+            mother: false,
 
-        fullBrothers:
-            toCount(input.fullBrothers),
+            paternalGrandfather: false,
+            maternalGrandmother: false,
 
-        fullSisters:
-            toCount(input.fullSisters),
+            fullBrothers: 0,
+            fullSisters: 0,
 
-        maternalSiblings:
-            toCount(input.maternalSiblings),
+            maternalSiblings: 0,
 
-        sonGrandchildren:
-            toBoolean(input.sonGrandchildren)
+            sonGrandchildren: false
+        },
+
+        propertyPlans: [],
+
+        settlement: {
+            notes: "",
+            scholarReviewer: "",
+            legalReviewer: ""
+        },
+
+        ownershipChecks: {},
+
+        completionChecks: {},
+
+        faraidResult: null
     };
 }
 
 
 /**
- * Add a fixed-share entitlement.
+ * Make sure imported or saved data has the expected structure.
  */
-function fixedShare({
-    heir,
-    count = 1,
-    share,
-    reason
-}) {
+function normalizeCase(data) {
+
+    const empty = createEmptyCase();
+
+    if (!data || typeof data !== "object") {
+        return empty;
+    }
 
     return {
-        heir,
-        count,
-        category: "fixed",
-        share,
-        reason
+        ...empty,
+
+        ...data,
+
+        schemaVersion: STORAGE_VERSION,
+
+        deceased: {
+            ...empty.deceased,
+            ...(data.deceased || {})
+        },
+
+        estate: {
+            ...empty.estate,
+            ...(data.estate || {}),
+
+            assets: Array.isArray(data.estate?.assets)
+                ? data.estate.assets
+                : []
+        },
+
+        obligations: {
+            ...empty.obligations,
+            ...(data.obligations || {})
+        },
+
+        family: {
+            ...empty.family,
+            ...(data.family || {})
+        },
+
+        propertyPlans: Array.isArray(data.propertyPlans)
+            ? data.propertyPlans
+            : [],
+
+        settlement: {
+            ...empty.settlement,
+            ...(data.settlement || {})
+        },
+
+        ownershipChecks: {
+            ...(data.ownershipChecks || {})
+        },
+
+        completionChecks: {
+            ...(data.completionChecks || {})
+        },
+
+        faraidResult: data.faraidResult || null
     };
 }
 
 
 /**
- * Add a residuary entitlement.
+ * Save the current case in the user's browser.
  */
-function residuaryShare({
-    heir,
-    count = 1,
-    reason
-}) {
+export function saveCase(caseData) {
 
-    return {
-        heir,
-        count,
-        category: "residuary",
-        share: "residue",
-        reason
-    };
+    try {
+
+        const normalized = normalizeCase(caseData);
+
+        localStorage.setItem(
+            STORAGE_KEY,
+            JSON.stringify(normalized)
+        );
+
+        return true;
+
+    } catch (error) {
+
+        console.error(
+            "Faraid Planner: unable to save case.",
+            error
+        );
+
+        return false;
+    }
 }
 
 
 /**
- * Main Faraid framework function.
- *
- * IMPORTANT:
- * This is intentionally a "supported common framework"
- * rather than a claim that every Faraid scenario has been
- * implemented.
+ * Load the saved case.
  */
-export function calculateFaraid(input = {}) {
+export function loadCase() {
 
-    const family = normalizeFamily(input);
+    try {
 
-    const {
-        husband,
-        wives,
-        sons,
-        daughters,
-        father,
-        mother,
-        paternalGrandfather,
-        maternalGrandmother,
-        fullBrothers,
-        fullSisters,
-        maternalSiblings,
-        sonGrandchildren
-    } = family;
+        const raw = localStorage.getItem(STORAGE_KEY);
 
-
-    const hasDescendants =
-        sons > 0 ||
-        daughters > 0;
-
-
-    const multipleSiblings =
-        fullBrothers +
-        fullSisters +
-        maternalSiblings >= 2;
-
-
-    const eligible = [];
-
-    const excluded = [];
-
-    const reviewFlags = [];
-
-
-    /* --------------------------------------------------
-       VALIDATION
-    -------------------------------------------------- */
-
-    if (husband && wives > 0) {
-
-        reviewFlags.push({
-            code: "INVALID_SPOUSE_COMBINATION",
-
-            severity: "high",
-
-            message:
-                "A deceased person cannot simultaneously have a surviving husband and surviving wives in the same case."
-        });
-
-    }
-
-
-    if (wives > 4) {
-
-        reviewFlags.push({
-            code: "WIVES_COUNT_REVIEW",
-
-            severity: "high",
-
-            message:
-                "More than four surviving wives were entered. Verify the factual circumstances before relying on the result."
-        });
-
-    }
-
-
-    /* --------------------------------------------------
-       HUSBAND
-    -------------------------------------------------- */
-
-    if (husband) {
-
-        eligible.push(
-            fixedShare({
-                heir: "Husband",
-                share: hasDescendants
-                    ? "1/4"
-                    : "1/2",
-
-                reason: hasDescendants
-                    ? "Common fixed-share rule where descendants survive."
-                    : "Common fixed-share rule where no descendants survive."
-            })
-        );
-
-    }
-
-
-    /* --------------------------------------------------
-       WIVES
-    -------------------------------------------------- */
-
-    if (wives > 0) {
-
-        eligible.push(
-            fixedShare({
-                heir: "Wives collectively",
-                count: wives,
-
-                share: hasDescendants
-                    ? "1/8 collectively"
-                    : "1/4 collectively",
-
-                reason: hasDescendants
-                    ? "Common fixed-share rule where descendants survive."
-                    : "Common fixed-share rule where no descendants survive."
-            })
-        );
-
-    }
-
-
-    /* --------------------------------------------------
-       MOTHER
-    -------------------------------------------------- */
-
-    if (mother) {
-
-        if (hasDescendants || multipleSiblings) {
-
-            eligible.push(
-                fixedShare({
-                    heir: "Mother",
-
-                    share: "1/6",
-
-                    reason:
-                        "Common fixed-share rule where descendants or multiple siblings survive."
-                })
-            );
-
-        } else {
-
-            eligible.push(
-                fixedShare({
-                    heir: "Mother",
-
-                    share: "1/3",
-
-                    reason:
-                        "Common fixed-share rule in the absence of descendants and multiple siblings."
-                })
-            );
-
+        if (!raw) {
+            return null;
         }
 
-    }
-
-
-    /* --------------------------------------------------
-       FATHER
-    -------------------------------------------------- */
-
-    if (father) {
-
-        if (hasDescendants) {
-
-            eligible.push(
-                fixedShare({
-                    heir: "Father",
-
-                    share: "1/6",
-
-                    reason:
-                        "Common fixed share where descendants survive."
-                })
-            );
-
-        } else {
-
-            eligible.push(
-                residuaryShare({
-                    heir: "Father",
-
-                    reason:
-                        "In this supported common framework the father takes the residue where no descendants survive."
-                })
-            );
-
-        }
-
-    }
-
-
-    /* --------------------------------------------------
-       FATHER / GRANDFATHER
-    -------------------------------------------------- */
-
-    if (father && paternalGrandfather) {
-
-        excluded.push({
-            heir: "Paternal grandfather",
-
-            reason:
-                "The father survives and takes precedence in this common framework."
-        });
-
-    }
-
-
-    if (!father && paternalGrandfather) {
-
-        reviewFlags.push({
-            code: "GRANDFATHER_CASE",
-
-            severity: "review",
-
-            message:
-                "A paternal grandfather survives without the father. Grandfather cases, particularly where siblings also survive, require detailed jurisprudential review."
-        });
-
-    }
-
-
-    /* --------------------------------------------------
-       GRANDMOTHER
-    -------------------------------------------------- */
-
-    if (maternalGrandmother && mother) {
-
-        excluded.push({
-            heir: "Maternal grandmother",
-
-            reason:
-                "The mother survives and excludes the grandmother in this common framework."
-        });
-
-    }
-
-
-    if (maternalGrandmother && !mother) {
-
-        reviewFlags.push({
-            code: "GRANDMOTHER_CASE",
-
-            severity: "review",
-
-            message:
-                "A maternal grandmother is present without the mother. Confirm her eligibility and share under the applicable jurisprudential framework."
-        });
-
-    }
-
-
-    /* --------------------------------------------------
-       CHILDREN
-    -------------------------------------------------- */
-
-    if (sons > 0) {
-
-        eligible.push(
-            residuaryShare({
-                heir: "Sons",
-
-                count: sons,
-
-                reason:
-                    "Sons participate in the residuary estate."
-            })
+        return normalizeCase(
+            JSON.parse(raw)
         );
 
-    }
+    } catch (error) {
 
-
-    if (daughters > 0 && sons === 0) {
-
-        if (daughters === 1) {
-
-            eligible.push(
-                fixedShare({
-                    heir: "Daughter",
-
-                    count: 1,
-
-                    share: "1/2",
-
-                    reason:
-                        "Common fixed-share rule for one daughter where no son survives."
-                })
-            );
-
-        } else {
-
-            eligible.push(
-                fixedShare({
-                    heir: "Daughters collectively",
-
-                    count: daughters,
-
-                    share: "2/3 collectively",
-
-                    reason:
-                        "Common fixed-share rule for two or more daughters where no son survives."
-                })
-            );
-
-        }
-
-    }
-
-
-    if (daughters > 0 && sons > 0) {
-
-        eligible.push(
-            residuaryShare({
-                heir: "Daughters with sons",
-
-                count: daughters,
-
-                reason:
-                    "Daughters participate in the residue with sons, subject to the established 2:1 ratio."
-            })
+        console.error(
+            "Faraid Planner: unable to load saved case.",
+            error
         );
 
+        return null;
     }
+}
 
 
-    /* --------------------------------------------------
-       FULL SIBLINGS
-    -------------------------------------------------- */
+/**
+ * Delete the saved case.
+ */
+export function deleteSavedCase() {
 
-    if (hasDescendants && (fullBrothers > 0 || fullSisters > 0)) {
+    try {
 
-        excluded.push({
-            heir: "Full siblings",
+        localStorage.removeItem(STORAGE_KEY);
 
-            reason:
-                "In the common framework, surviving descendants exclude full siblings from the residue."
-        });
+        return true;
 
+    } catch (error) {
+
+        console.error(
+            "Faraid Planner: unable to delete saved case.",
+            error
+        );
+
+        return false;
     }
+}
 
 
-    if (father && (fullBrothers > 0 || fullSisters > 0)) {
+/**
+ * Convert a case into downloadable JSON text.
+ */
+export function exportCaseJSON(caseData) {
 
-        excluded.push({
-            heir: "Full siblings",
-
-            reason:
-                "In the common framework, a surviving father excludes full siblings."
-        });
-
-    }
-
-
-    if (
-        !father &&
-        !hasDescendants &&
-        (fullBrothers > 0 || fullSisters > 0)
-    ) {
-
-        reviewFlags.push({
-            code: "FULL_SIBLING_CASE",
-
-            severity: "review",
-
-            message:
-                "A full-sibling inheritance case is present. Exact treatment depends on the complete family configuration and applicable jurisprudential rules."
-        });
-
-    }
+    return JSON.stringify(
+        normalizeCase(caseData),
+        null,
+        2
+    );
+}
 
 
-    /* --------------------------------------------------
-       MATERNAL SIBLINGS
-    -------------------------------------------------- */
+/**
+ * Import a JSON case.
+ */
+export function importCaseJSON(json) {
 
-    if (maternalSiblings > 0) {
+    const parsed =
+        typeof json === "string"
+            ? JSON.parse(json)
+            : json;
 
-        if (
-            father ||
-            mother ||
-            hasDescendants
-        ) {
-
-            excluded.push({
-                heir: "Maternal siblings",
-
-                reason:
-                    "A surviving parent or descendant may exclude maternal siblings in the common framework."
-            });
-
-        } else {
-
-            reviewFlags.push({
-                code: "MATERNAL_SIBLING_CASE",
-
-                severity: "review",
-
-                message:
-                    "Maternal sibling inheritance is present and requires the applicable detailed rule set."
-            });
-
-        }
-
-    }
-
-
-    /* --------------------------------------------------
-       SON GRANDCHILDREN
-    -------------------------------------------------- */
-
-    if (sonGrandchildren) {
-
-        reviewFlags.push({
-            code: "SON_GRANDCHILDREN_CASE",
-
-            severity: "review",
-
-            message:
-                "Grandchildren through a son are present. Their eligibility depends on the surviving children and detailed Hajb rules."
-        });
-
-    }
-
-
-    /* --------------------------------------------------
-       FINAL REVIEW STATUS
-    -------------------------------------------------- */
-
-    let status = "supported-common-framework";
-
-
-    if (reviewFlags.length > 0) {
-
-        status = "specialist-review-required";
-
-    }
-
-
-    if (
-        reviewFlags.some(
-            flag => flag.severity === "high"
-        )
-    ) {
-
-        status = "input-correction-required";
-
-    }
-
-
-    return {
-
-        engineVersion:
-            FARAID_ENGINE_VERSION,
-
-        status,
-
-        family,
-
-        hasDescendants,
-
-        eligible,
-
-        excluded,
-
-        reviewFlags,
-
-        notes: [
-            "This engine provides a structured framework for supported common cases.",
-            "It intentionally flags complex jurisprudential cases instead of silently producing a potentially incorrect result.",
-            "Final inheritance determination should be reviewed by a qualified Islamic scholar."
-        ]
-
-    };
+    return normalizeCase(parsed);
 }
