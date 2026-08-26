@@ -579,12 +579,38 @@ function applyChecks(checks = {}) {
 
 function determineFaraid() {
 
+    const resultContainer =
+        $("faraidResult");
+
+
+    if (!resultContainer) {
+
+        throw new Error(
+            "The Faraid result container (#faraidResult) could not be found."
+        );
+    }
+
+
     const family =
         getFamilyData();
 
 
+    console.log(
+        "Faraid input:",
+        family
+    );
+
+
     const result =
-        calculateFaraid(family);
+        calculateFaraid(
+            family
+        );
+
+
+    console.log(
+        "Faraid result:",
+        result
+    );
 
 
     currentCase =
@@ -595,11 +621,25 @@ function determineFaraid() {
         result;
 
 
-    renderFaraidResult(result);
+    renderFaraidResult(
+        result
+    );
+
 
     updateDashboard();
 
+
     renderActions();
+
+
+    /*
+     * Scroll the user to the result.
+     */
+
+    resultContainer.scrollIntoView({
+        behavior: "smooth",
+        block: "start"
+    });
 
 }
 
@@ -2615,147 +2655,280 @@ function handleNewCase() {
 
 
 /* --------------------------------------------------
-   EVENT LISTENERS
+   APPLICATION INITIALISATION
 -------------------------------------------------- */
 
-$("addAssetBtn")
-    .addEventListener(
+function bindClick(id, handler) {
+
+    const element = $(id);
+
+    if (!element) {
+
+        console.warn(
+            `Faraid Planner: element #${id} was not found.`
+        );
+
+        return;
+    }
+
+    element.addEventListener(
         "click",
+        handler
+    );
+}
+
+
+function initialiseApplication() {
+
+    /*
+     * --------------------------------------------------
+     * BUTTONS
+     * --------------------------------------------------
+     */
+
+    bindClick(
+        "addAssetBtn",
         () => addAsset()
     );
 
 
-$("addPropertyPlanBtn")
-    .addEventListener(
-        "click",
+    bindClick(
+        "addPropertyPlanBtn",
         () => addPropertyPlan()
     );
 
 
-$("determineFaraidBtn")
-    .addEventListener(
-        "click",
-        determineFaraid
+    bindClick(
+        "determineFaraidBtn",
+        () => {
+
+            try {
+
+                determineFaraid();
+
+            } catch (error) {
+
+                console.error(
+                    "Faraid calculation error:",
+                    error
+                );
+
+                const resultElement =
+                    $("faraidResult");
+
+                if (resultElement) {
+
+                    resultElement.innerHTML = `
+
+                        <div class="notice notice-warning">
+
+                            <strong>
+                                Unable to calculate Faraid
+                            </strong>
+
+                            <p>
+                                The system encountered an error
+                                while processing this case.
+                            </p>
+
+                            <details>
+
+                                <summary>
+                                    Technical error
+                                </summary>
+
+                                <pre>${escapeHTML(
+                                    error.message ||
+                                    String(error)
+                                )}</pre>
+
+                            </details>
+
+                        </div>
+
+                    `;
+                }
+            }
+        }
     );
 
 
-$("saveCaseBtn")
-    .addEventListener(
-        "click",
-        handleSave
+    bindClick(
+        "saveCaseBtn",
+        () => handleSave()
     );
 
 
-$("loadCaseBtn")
-    .addEventListener(
-        "click",
-        handleLoad
+    bindClick(
+        "loadCaseBtn",
+        () => handleLoad()
     );
 
 
-$("loadCaseHeroBtn")
-    .addEventListener(
-        "click",
-        handleLoad
+    bindClick(
+        "loadCaseHeroBtn",
+        () => handleLoad()
     );
 
 
-$("newCaseBtn")
-    .addEventListener(
-        "click",
-        handleNewCase
+    bindClick(
+        "newCaseBtn",
+        () => handleNewCase()
     );
 
 
-$("generateBlueprintBtn")
-    .addEventListener(
-        "click",
-        createBlueprint
+    bindClick(
+        "generateBlueprintBtn",
+        () => createBlueprint()
     );
 
 
-$("printBlueprintBtn")
-    .addEventListener(
-        "click",
+    bindClick(
+        "printBlueprintBtn",
         () => window.print()
     );
 
 
-document.addEventListener(
-    "click",
-    event => {
+    /*
+     * --------------------------------------------------
+     * REMOVE DYNAMIC ASSETS / PROPERTY PLANS
+     * --------------------------------------------------
+     */
 
-        if (
-            event.target.classList.contains(
-                "remove-asset"
-            )
-        ) {
+    document.addEventListener(
+        "click",
+        event => {
 
-            event.target
-                .closest(".asset-row")
-                .remove();
+            const target =
+                event.target;
 
-            updateDashboard();
-            renderActions();
+
+            if (
+                target.classList.contains(
+                    "remove-asset"
+                )
+            ) {
+
+                const row =
+                    target.closest(
+                        ".asset-row"
+                    );
+
+                if (row) {
+                    row.remove();
+                }
+
+                updateDashboard();
+
+                return;
+            }
+
+
+            if (
+                target.classList.contains(
+                    "remove-property"
+                )
+            ) {
+
+                const row =
+                    target.closest(
+                        ".property-row"
+                    );
+
+                if (row) {
+                    row.remove();
+                }
+
+                updateDashboard();
+
+            }
 
         }
+    );
 
 
-        if (
-            event.target.classList.contains(
-                "remove-property"
-            )
-        ) {
+    /*
+     * --------------------------------------------------
+     * AUTOMATIC CASE STATE UPDATES
+     * --------------------------------------------------
+     */
 
-            event.target
-                .closest(".property-row")
-                .remove();
+    document.addEventListener(
+        "input",
+        () => {
 
-            updateDashboard();
-            renderActions();
+            try {
+
+                currentCase =
+                    collectCaseFromUI();
+
+                updateDashboard();
+
+            } catch (error) {
+
+                console.warn(
+                    "Case update warning:",
+                    error
+                );
+
+            }
 
         }
-
-    }
-);
+    );
 
 
-document.addEventListener(
-    "input",
-    () => {
+    document.addEventListener(
+        "change",
+        () => {
 
-        currentCase =
-            collectCaseFromUI();
+            try {
 
-        updateDashboard();
-        renderActions();
+                currentCase =
+                    collectCaseFromUI();
 
-    }
-);
+                updateDashboard();
+
+            } catch (error) {
+
+                console.warn(
+                    "Case change warning:",
+                    error
+                );
+
+            }
+
+        }
+    );
 
 
-document.addEventListener(
-    "change",
-    () => {
+    /*
+     * --------------------------------------------------
+     * INITIAL UI
+     * --------------------------------------------------
+     */
 
-        currentCase =
-            collectCaseFromUI();
+    updateDashboard();
 
-        updateDashboard();
-        renderActions();
+    renderActions();
 
-    }
-);
+}
 
 
 /* --------------------------------------------------
-   INITIALISE
+   START APPLICATION
 -------------------------------------------------- */
 
-addAsset();
+if (
+    document.readyState === "loading"
+) {
 
-addPropertyPlan();
+    document.addEventListener(
+        "DOMContentLoaded",
+        initialiseApplication
+    );
 
-updateDashboard();
+} else {
 
-renderActions();
+    initialiseApplication();
+
+}
