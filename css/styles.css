@@ -1023,3 +1023,520 @@ tr:hover td {
     }
 
 }
+
+/* =========================================================
+   FARAID RESULT — VERSION 2
+========================================================= */
+
+.faraid-result-card {
+    padding: 28px;
+}
+
+
+/* ---------------------------------------------------------
+   RESULT HEADER
+--------------------------------------------------------- */
+
+.faraid-result-header {
+    display: flex;
+
+    align-items: flex-start;
+    justify-content: space-between;
+
+    gap: 20px;
+
+    margin-bottom: 24px;
+}
+
+
+.faraid-result-header h3 {
+    margin-bottom: 5px;
+}
+
+
+.faraid-result-header p {
+    margin: 0;
+}
+
+
+.faraid-status {
+    display: inline-flex;
+
+    align-items: center;
+
+    padding: 7px 12px;
+
+    border-radius: 999px;
+
+    font-size: 0.72rem;
+
+    font-weight: 900;
+
+    white-space: nowrap;
+}
+
+
+.status-supported {
+    color: var(--green);
+
+    background: var(--green-light);
+}
+
+
+.status-review {
+    color: var(--blue);
+
+    background: var(--blue-light);
+}
+
+
+/* ---------------------------------------------------------
+   SUBHEADINGS
+--------------------------------------------------------- */
+
+.faraid-subheading {
+    margin-top: 28px;
+
+    margin-bottom: 12px;
+
+    color: var(--green-dark);
+
+    font-family: Georgia, serif;
+
+    font-size: 1.2rem;
+}
+
+
+/* ---------------------------------------------------------
+   FARAID TABLE
+--------------------------------------------------------- */
+
+.faraid-table-wrapper {
+    border: 1px solid var(--border);
+
+    border-radius: 10px;
+
+    overflow-x: auto;
+}
+
+
+.faraid-table {
+    min-width: 1050px;
+}
+
+
+.faraid-table th {
+    white-space: nowrap;
+
+    background: #f1f7f4;
+
+    color: var(--green-dark);
+
+    font-size: 0.78rem;
+}
+
+
+.faraid-table td {
+    padding: 15px 12px;
+
+    vertical-align: middle;
+}
+
+
+.faraid-table td:nth-child(1) {
+    min-width: 150px;
+}
+
+
+.faraid-table td:nth-child(2) {
+    min-width: 100px;
+}
+
+
+.faraid-table td:nth-child(3) {
+    min-width: 175px;
+}
+
+
+.faraid-table td:nth-child(4) {
+    min-width: 125px;
+}
+
+
+.faraid-table td:nth-child(5) {
+    min-width: 190px;
+}
+
+
+.faraid-table td:nth-child(6) {
+    min-width: 260px;
+}
+
+
+/* ---------------------------------------------------------
+   ELIGIBILITY BADGE
+--------------------------------------------------------- */
+
+.badge-eligible {
+    color: var(--green);
+
+    background: var(--green-light);
+}
+
+
+/* ---------------------------------------------------------
+   RULE CELL
+--------------------------------------------------------- */
+
+.rule-cell {
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 3px;
+}
+
+
+.rule-cell strong {
+    color: var(--text);
+
+    font-size: 0.88rem;
+}
+
+
+.rule-cell small {
+    color: var(--muted);
+
+    font-size: 0.75rem;
+}
+
+
+/* ---------------------------------------------------------
+   EXACT SHARE
+--------------------------------------------------------- */
+
+.exact-share {
+    display: block;
+
+    color: var(--green-dark);
+
+    font-size: 1.05rem;
+
+    white-space: nowrap;
+}
+
+
+.decimal-share {
+    display: block;
+
+    margin-top: 3px;
+
+    color: var(--muted);
+
+    font-size: 0.72rem;
+}
+
+
+/* =========================================================
+   SHARE CALCULATION
+========================================================= */
+
+.share-calculation {
+    margin-top: 30px;
+}
+
+
+.calculation-flow {
+    display: grid;
+
+    grid-template-columns:
+        minmax(210px, 1fr)
+        auto
+        minmax(210px, 1fr)
+        auto
+        minmax(230px, 1.1fr)
+        auto
+        minmax(210px, 1fr);
+
+    gap: 12px;
+
+    align-items: stretch;
+}
+
+
+.calculation-card {
+    min-width: 0;
+
+    background: white;
+
+    border: 1px solid var(--border);
+
+    border-radius: 10px;
+
+    overflow: hidden;
+
+    box-shadow:
+        0 4px 14px rgba(
+            22,
+            77,
+            58,
+            0.05
+        );
+}
+
+
+.calculation-card-header {
+    padding: 11px 14px;
+
+    background: #edf5f2;
+
+    border-bottom: 1px solid var(--border);
+
+    color: var(--green-dark);
+
+    font-size: 0.82rem;
+
+    font-weight: 900;
+}
+
+
+.calculation-card-body {
+    padding: 14px;
+}
+
+
+.calculation-line {
+    display: flex;
+
+    align-items: flex-start;
+
+    justify-content: space-between;
+
+    gap: 12px;
+
+    padding: 7px 0;
+
+    border-bottom: 1px solid #edf1ef;
+
+    font-size: 0.82rem;
+}
+
+
+.calculation-line:last-child {
+    border-bottom: 0;
+}
+
+
+.calculation-line span {
+    color: var(--text);
+}
+
+
+.calculation-line strong {
+    color: var(--green-dark);
+
+    white-space: nowrap;
+}
+
+
+.calculation-total {
+    margin-top: 8px;
+
+    padding-top: 11px;
+
+    border-top: 2px solid var(--border);
+
+    border-bottom: 0;
+
+    font-weight: 900;
+}
+
+
+.calculation-total strong {
+    font-size: 0.95rem;
+}
+
+
+.calculation-arrow {
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    color: var(--green-dark);
+
+    font-size: 1.8rem;
+
+    font-weight: 900;
+}
+
+
+.calculation-explanation {
+    margin-top: 12px;
+
+    padding: 9px;
+
+    border-radius: 7px;
+
+    background: var(--green-light);
+
+    color: var(--green-dark);
+
+    font-size: 0.74rem;
+
+    line-height: 1.45;
+}
+
+
+/* ---------------------------------------------------------
+   EXCLUDED SECTION
+--------------------------------------------------------- */
+
+.excluded-section {
+    margin-top: 30px;
+}
+
+
+/* ---------------------------------------------------------
+   REVIEW NOTICE
+--------------------------------------------------------- */
+
+.faraid-review-notice {
+    margin-top: 25px;
+}
+
+
+.faraid-review-notice ul {
+    margin-bottom: 0;
+}
+
+
+/* ---------------------------------------------------------
+   IMPORTANT NOTICE
+--------------------------------------------------------- */
+
+.faraid-important {
+    margin-top: 25px;
+
+    padding: 18px;
+
+    font-size: 0.88rem;
+}
+
+
+/* =========================================================
+   NOTES & DISCLAIMERS
+========================================================= */
+
+.faraid-notes {
+    margin-top: 12px;
+
+    border: 1px solid var(--border);
+
+    border-radius: 10px;
+
+    background: white;
+}
+
+
+.faraid-notes summary {
+    padding: 14px 16px;
+
+    color: var(--green-dark);
+
+    font-weight: 850;
+
+    cursor: pointer;
+
+    list-style: none;
+}
+
+
+.faraid-notes summary::-webkit-details-marker {
+    display: none;
+}
+
+
+.faraid-notes summary::before {
+    content: "☷";
+
+    margin-right: 10px;
+
+    color: var(--green);
+}
+
+
+.faraid-notes-body {
+    padding: 0 16px 16px;
+
+    color: var(--muted);
+
+    font-size: 0.85rem;
+}
+
+
+.faraid-notes-body p {
+    margin-bottom: 10px;
+}
+
+
+.faraid-notes-body p:last-child {
+    margin-bottom: 0;
+}
+
+
+/* =========================================================
+   RESPONSIVE FARAID TABLE
+========================================================= */
+
+@media (max-width: 1100px) {
+
+    .calculation-flow {
+
+        grid-template-columns:
+            repeat(2, minmax(220px, 1fr));
+
+    }
+
+
+    .calculation-arrow {
+
+        display: none;
+
+    }
+
+}
+
+
+@media (max-width: 700px) {
+
+    .faraid-result-card {
+        padding: 18px;
+    }
+
+
+    .faraid-result-header {
+        flex-direction: column;
+    }
+
+
+    .calculation-flow {
+
+        grid-template-columns: 1fr;
+
+    }
+
+
+    .calculation-arrow {
+
+        display: none;
+
+    }
+
+
+    .faraid-table {
+        min-width: 1000px;
+    }
+
+}
