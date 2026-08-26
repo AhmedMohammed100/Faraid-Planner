@@ -1,34 +1,127 @@
 /*
  * Faraid Planner - Faraid Engine
- *
- * Version 0.2.0
+ * Version 0.3.0
  *
  * Purpose:
- *   1. Identify eligible heirs.
- *   2. Identify excluded heirs.
- *   3. Identify the applicable inheritance rule.
- *   4. Calculate exact fractional entitlements.
- *   5. Explain how the distributable estate should be allocated.
+ *  1. Identify eligible heirs.
+ *  2. Identify excluded heirs.
+ *  3. Identify the applicable rule.
+ *  4. Calculate exact fractional entitlements for supported cases.
+ *  5. Explain distribution instructions.
  *
  * IMPORTANT:
- * This engine intentionally supports a defined common framework.
- * Complex jurisprudential cases are flagged for specialist review.
+ * This is a structured planning engine, not a fatwa or legal determination.
+ * Complex jurisprudential cases are deliberately flagged for specialist review.
  *
- * Fractions are fractions of the DISTRIBUTABLE ESTATE after
- * applicable debts, funeral/burial expenses and valid obligations
- * have been settled.
+ * Fractions are portions of the DISTRIBUTABLE ESTATE after applicable
+ * debts, funeral/burial expenses and valid obligations have been settled.
  */
 
+export const FARAID_ENGINE_VERSION = "0.3.0";
+
 
 /* =========================================================
-   ENGINE VERSION
+   FRACTION HELPERS
 ========================================================= */
 
-export const FARAID_ENGINE_VERSION = "0.2.0";
+function gcd(a, b) {
+    a = Math.abs(Number(a));
+    b = Math.abs(Number(b));
+
+    while (b !== 0) {
+        const r = a % b;
+        a = b;
+        b = r;
+    }
+
+    return a || 1;
+}
+
+function fraction(numerator, denominator = 1) {
+    numerator = Number(numerator);
+    denominator = Number(denominator);
+
+    if (!Number.isFinite(numerator) || !Number.isFinite(denominator)) {
+        throw new Error("Invalid fraction.");
+    }
+
+    if (denominator === 0) {
+        throw new Error("Fraction denominator cannot be zero.");
+    }
+
+    if (numerator === 0) {
+        return {
+            numerator: 0,
+            denominator: 1
+        };
+    }
+
+    if (denominator < 0) {
+        numerator *= -1;
+        denominator *= -1;
+    }
+
+    const d = gcd(numerator, denominator);
+
+    return {
+        numerator: numerator / d,
+        denominator: denominator / d
+    };
+}
+
+function addFractions(a, b) {
+    return fraction(
+        a.numerator * b.denominator +
+        b.numerator * a.denominator,
+        a.denominator * b.denominator
+    );
+}
+
+function subtractFractions(a, b) {
+    return fraction(
+        a.numerator * b.denominator -
+        b.numerator * a.denominator,
+        a.denominator * b.denominator
+    );
+}
+
+function multiplyFractions(a, b) {
+    return fraction(
+        a.numerator * b.numerator,
+        a.denominator * b.denominator
+    );
+}
+
+function fractionToString(value) {
+    if (!value) return "—";
+
+    if (value.numerator === 0) {
+        return "0";
+    }
+
+    if (value.denominator === 1) {
+        return String(value.numerator);
+    }
+
+    return `${value.numerator}/${value.denominator}`;
+}
+
+function fractionToDecimal(value) {
+    if (!value || value.denominator === 0) {
+        return "0.000000";
+    }
+
+    return (
+        value.numerator /
+        value.denominator
+    ).toFixed(6);
+}
+
+const WHOLE = fraction(1, 1);
 
 
 /* =========================================================
-   BASIC HELPERS
+   INPUT NORMALISATION
 ========================================================= */
 
 function toBoolean(value) {
@@ -39,176 +132,18 @@ function toBoolean(value) {
     );
 }
 
-
 function toCount(value) {
+    const n = Number(value);
 
-    const number = Number(value);
-
-    if (!Number.isFinite(number)) {
+    if (!Number.isFinite(n)) {
         return 0;
     }
 
     return Math.max(
         0,
-        Math.floor(number)
+        Math.floor(n)
     );
 }
-
-
-/* =========================================================
-   FRACTION ENGINE
-========================================================= */
-
-/*
- * Fractions are represented as:
- *
- * {
- *     numerator: 1,
- *     denominator: 6
- * }
- *
- * They are always reduced to their simplest form.
- */
-
-function gcd(a, b) {
-
-    a = Math.abs(a);
-    b = Math.abs(b);
-
-    while (b !== 0) {
-
-        const remainder = a % b;
-
-        a = b;
-        b = remainder;
-    }
-
-    return a || 1;
-}
-
-
-function simplifyFraction(
-    numerator,
-    denominator
-) {
-
-    if (denominator === 0) {
-        throw new Error(
-            "Fraction denominator cannot be zero."
-        );
-    }
-
-    if (numerator === 0) {
-
-        return {
-            numerator: 0,
-            denominator: 1
-        };
-    }
-
-    if (denominator < 0) {
-
-        numerator *= -1;
-        denominator *= -1;
-    }
-
-    const divisor =
-        gcd(
-            numerator,
-            denominator
-        );
-
-    return {
-        numerator:
-            numerator / divisor,
-
-        denominator:
-            denominator / divisor
-    };
-}
-
-
-function fraction(
-    numerator,
-    denominator
-) {
-
-    return simplifyFraction(
-        numerator,
-        denominator
-    );
-}
-
-
-function addFractions(a, b) {
-
-    return simplifyFraction(
-        a.numerator * b.denominator +
-            b.numerator * a.denominator,
-
-        a.denominator *
-            b.denominator
-    );
-}
-
-
-function subtractFractions(a, b) {
-
-    return simplifyFraction(
-        a.numerator * b.denominator -
-            b.numerator * a.denominator,
-
-        a.denominator *
-            b.denominator
-    );
-}
-
-
-function multiplyFractions(a, b) {
-
-    return simplifyFraction(
-        a.numerator * b.numerator,
-
-        a.denominator *
-            b.denominator
-    );
-}
-
-
-function fractionToString(value) {
-
-    if (value.numerator === 0) {
-        return "0";
-    }
-
-    if (
-        value.denominator === 1
-    ) {
-        return String(
-            value.numerator
-        );
-    }
-
-    return `${value.numerator}/${value.denominator}`;
-}
-
-
-function fractionToDecimal(value) {
-
-    return (
-        value.numerator /
-        value.denominator
-    ).toFixed(6);
-}
-
-
-const WHOLE =
-    fraction(1, 1);
-
-
-/* =========================================================
-   FAMILY NORMALISATION
-========================================================= */
 
 export function normalizeFamily(input = {}) {
 
@@ -243,19 +178,13 @@ export function normalizeFamily(input = {}) {
             ),
 
         fullBrothers:
-            toCount(
-                input.fullBrothers
-            ),
+            toCount(input.fullBrothers),
 
         fullSisters:
-            toCount(
-                input.fullSisters
-            ),
+            toCount(input.fullSisters),
 
         maternalSiblings:
-            toCount(
-                input.maternalSiblings
-            ),
+            toCount(input.maternalSiblings),
 
         sonGrandchildren:
             toBoolean(
@@ -266,16 +195,16 @@ export function normalizeFamily(input = {}) {
 
 
 /* =========================================================
-   ENTITLEMENT BUILDERS
+   ENTITLEMENT HELPERS
 ========================================================= */
 
 function fixedShare({
     heir,
     count = 1,
     share,
+    fractionValue,
     reason,
-    source,
-    fractionValue
+    source
 }) {
 
     return {
@@ -284,7 +213,8 @@ function fixedShare({
 
         count,
 
-        category: "fixed",
+        category:
+            "fixed",
 
         share,
 
@@ -296,7 +226,6 @@ function fixedShare({
         source
     };
 }
-
 
 function residuaryShare({
     heir,
@@ -311,11 +240,14 @@ function residuaryShare({
 
         count,
 
-        category: "residuary",
+        category:
+            "residuary",
 
-        share: "residue",
+        share:
+            "residue",
 
-        fraction: null,
+        fraction:
+            null,
 
         reason,
 
@@ -335,22 +267,26 @@ export function calculateFaraid(
     const family =
         normalizeFamily(input);
 
-
     const {
 
         husband,
+
         wives,
 
         sons,
+
         daughters,
 
         father,
+
         mother,
 
         paternalGrandfather,
+
         maternalGrandmother,
 
         fullBrothers,
+
         fullSisters,
 
         maternalSiblings,
@@ -366,11 +302,9 @@ export function calculateFaraid(
 
 
     const multipleSiblings =
-        (
-            fullBrothers +
-            fullSisters +
-            maternalSiblings
-        ) >= 2;
+        fullBrothers +
+        fullSisters +
+        maternalSiblings >= 2;
 
 
     const eligible = [];
@@ -399,6 +333,7 @@ export function calculateFaraid(
 
             message:
                 "A surviving husband and surviving wives cannot be entered together for the same deceased person."
+
         });
     }
 
@@ -415,6 +350,7 @@ export function calculateFaraid(
 
             message:
                 "More than four surviving wives were entered. Verify the factual circumstances."
+
         });
     }
 
@@ -426,10 +362,6 @@ export function calculateFaraid(
     let totalFixedShares =
         fraction(0, 1);
 
-
-    /*
-     * Every fixed entitlement is added here.
-     */
 
     function addFixedEntitlement(
         entitlement
@@ -463,7 +395,8 @@ export function calculateFaraid(
 
             fixedShare({
 
-                heir: "Husband",
+                heir:
+                    "Husband",
 
                 share:
                     fractionToString(
@@ -475,9 +408,7 @@ export function calculateFaraid(
 
                 reason:
                     hasDescendants
-
                         ? "Qur'anic fixed share where descendants survive."
-
                         : "Qur'anic fixed share where no descendants survive.",
 
                 source:
@@ -512,16 +443,16 @@ export function calculateFaraid(
                     wives,
 
                 share:
-                    `${fractionToString(share)} collectively`,
+                    `${fractionToString(
+                        share
+                    )} collectively`,
 
                 fractionValue:
                     share,
 
                 reason:
                     hasDescendants
-
                         ? "Qur'anic fixed share where descendants survive."
-
                         : "Qur'anic fixed share where no descendants survive.",
 
                 source:
@@ -540,10 +471,8 @@ export function calculateFaraid(
     if (mother) {
 
         const share =
-            (
-                hasDescendants ||
-                multipleSiblings
-            )
+            hasDescendants ||
+            multipleSiblings
 
                 ? fraction(1, 6)
 
@@ -554,7 +483,8 @@ export function calculateFaraid(
 
             fixedShare({
 
-                heir: "Mother",
+                heir:
+                    "Mother",
 
                 share:
                     fractionToString(
@@ -565,10 +495,9 @@ export function calculateFaraid(
                     share,
 
                 reason:
-                    (
-                        hasDescendants ||
-                        multipleSiblings
-                    )
+
+                    hasDescendants ||
+                    multipleSiblings
 
                         ? "Qur'anic fixed share where descendants or qualifying multiple siblings survive."
 
@@ -586,6 +515,17 @@ export function calculateFaraid(
     /* =====================================================
        FATHER
     ===================================================== */
+
+    /*
+     * Where descendants survive, the father has a fixed 1/6.
+     *
+     * If there are daughters but no sons, the father may also
+     * receive the applicable residue in this supported
+     * framework.
+     *
+     * Where no descendants survive, the father is treated as
+     * residuary in this supported framework.
+     */
 
     if (father) {
 
@@ -637,7 +577,7 @@ export function calculateFaraid(
 
 
     /* =====================================================
-       GRANDFATHER
+       PATERNAL GRANDFATHER
     ===================================================== */
 
     if (
@@ -652,6 +592,7 @@ export function calculateFaraid(
 
             reason:
                 "The surviving father takes precedence in this supported framework."
+
         });
 
     } else if (
@@ -669,12 +610,13 @@ export function calculateFaraid(
 
             message:
                 "A paternal grandfather survives without the father. Detailed jurisprudential review is required."
+
         });
     }
 
 
     /* =====================================================
-       GRANDMOTHER
+       MATERNAL GRANDMOTHER
     ===================================================== */
 
     if (
@@ -689,6 +631,7 @@ export function calculateFaraid(
 
             reason:
                 "The surviving mother excludes the maternal grandmother in this supported framework."
+
         });
 
     } else if (
@@ -706,12 +649,13 @@ export function calculateFaraid(
 
             message:
                 "A maternal grandmother is present without the mother. Confirm her eligibility under the applicable jurisprudential framework."
+
         });
     }
 
 
     /* =====================================================
-       CHILDREN — SONS
+       SONS
     ===================================================== */
 
     if (sons > 0) {
@@ -739,7 +683,7 @@ export function calculateFaraid(
 
 
     /* =====================================================
-       CHILDREN — DAUGHTERS WITHOUT SONS
+       DAUGHTERS WITHOUT SONS
     ===================================================== */
 
     if (
@@ -807,7 +751,7 @@ export function calculateFaraid(
 
 
     /* =====================================================
-       CHILDREN — DAUGHTERS WITH SONS
+       DAUGHTERS WITH SONS
     ===================================================== */
 
     if (
@@ -842,11 +786,14 @@ export function calculateFaraid(
     ===================================================== */
 
     if (
+
         hasDescendants &&
+
         (
             fullBrothers > 0 ||
             fullSisters > 0
         )
+
     ) {
 
         excluded.push({
@@ -856,14 +803,18 @@ export function calculateFaraid(
 
             reason:
                 "In this supported framework, surviving descendants exclude full siblings."
+
         });
 
     } else if (
+
         father &&
+
         (
             fullBrothers > 0 ||
             fullSisters > 0
         )
+
     ) {
 
         excluded.push({
@@ -873,15 +824,19 @@ export function calculateFaraid(
 
             reason:
                 "In this supported framework, a surviving father excludes full siblings."
+
         });
 
     } else if (
+
         !father &&
         !hasDescendants &&
+
         (
             fullBrothers > 0 ||
             fullSisters > 0
         )
+
     ) {
 
         reviewFlags.push({
@@ -894,6 +849,7 @@ export function calculateFaraid(
 
             message:
                 "A full-sibling inheritance case is present. Exact treatment requires the complete family configuration and applicable jurisprudential rules."
+
         });
     }
 
@@ -902,7 +858,9 @@ export function calculateFaraid(
        MATERNAL SIBLINGS
     ===================================================== */
 
-    if (maternalSiblings > 0) {
+    if (
+        maternalSiblings > 0
+    ) {
 
         if (
             father ||
@@ -917,6 +875,7 @@ export function calculateFaraid(
 
                 reason:
                     "A surviving parent or descendant excludes maternal siblings in this supported framework."
+
             });
 
         } else {
@@ -931,6 +890,7 @@ export function calculateFaraid(
 
                 message:
                     "Maternal sibling inheritance is present and requires detailed jurisprudential review."
+
             });
         }
     }
@@ -940,7 +900,9 @@ export function calculateFaraid(
        SON GRANDCHILDREN
     ===================================================== */
 
-    if (sonGrandchildren) {
+    if (
+        sonGrandchildren
+    ) {
 
         reviewFlags.push({
 
@@ -952,25 +914,24 @@ export function calculateFaraid(
 
             message:
                 "Grandchildren through a son are present. Their eligibility depends on the surviving children and detailed Hajb rules."
+
         });
     }
 
 
     /* =====================================================
-       CALCULATE RESIDUE
+       FIXED-SHARE TOTAL AND RESIDUE
     ===================================================== */
 
     let residue =
         subtractFractions(
+
             WHOLE,
+
             totalFixedShares
+
         );
 
-
-    /*
-     * If fixed shares exceed the estate,
-     * this case requires specialist handling.
-     */
 
     if (
         residue.numerator < 0
@@ -986,6 +947,7 @@ export function calculateFaraid(
 
             message:
                 "The fixed shares exceed the whole estate under the current framework. This requires specialist review."
+
         });
 
         residue =
@@ -994,66 +956,68 @@ export function calculateFaraid(
 
 
     /* =====================================================
-       RESIDUARY DISTRIBUTION
+       RESIDUARY CALCULATION
     ===================================================== */
 
     const hasSonResiduary =
         sons > 0;
 
 
-    const hasDaughterWithSon =
-        sons > 0 &&
-        daughters > 0;
-
-
     let residuaryCalculation =
         null;
 
 
-    const finalEntitlements = [];
+    const finalEntitlements =
+        [];
 
 
-    /*
-     * Add fixed entitlements first.
-     */
+    /* =====================================================
+       FIXED ENTITLEMENTS
+    ===================================================== */
 
     eligible
+
         .filter(
             item =>
                 item.category === "fixed"
         )
-        .forEach(item => {
 
-            finalEntitlements.push({
+        .forEach(
+            item => {
 
-                heir:
-                    item.heir,
+                finalEntitlements.push({
 
-                count:
-                    item.count,
+                    heir:
+                        item.heir,
 
-                category:
-                    "fixed",
+                    count:
+                        item.count,
 
-                fraction:
-                    item.fraction,
+                    category:
+                        "fixed",
 
-                share:
-                    fractionToString(
-                        item.fraction
-                    ),
+                    fraction:
+                        item.fraction,
 
-                decimal:
-                    fractionToDecimal(
-                        item.fraction
-                    ),
+                    share:
+                        fractionToString(
+                            item.fraction
+                        ),
 
-                instruction:
-                    `Allocate ${fractionToString(item.fraction)} of the distributable estate to ${item.heir.toLowerCase()}.`
+                    decimal:
+                        fractionToDecimal(
+                            item.fraction
+                        ),
 
-            });
+                    instruction:
+                        `Allocate ${fractionToString(
+                            item.fraction
+                        )} of the distributable estate to ${item.heir.toLowerCase()}.`
 
-        });
+                });
+
+            }
+        );
 
 
     /* =====================================================
@@ -1065,12 +1029,8 @@ export function calculateFaraid(
     ) {
 
         const units =
-            (
-                sons * 2
-            ) +
-            (
-                daughters * 1
-            );
+            sons * 2 +
+            daughters;
 
 
         const valuePerUnit =
@@ -1091,7 +1051,10 @@ export function calculateFaraid(
 
                 valuePerUnit,
 
-                fraction(2, 1)
+                fraction(
+                    2,
+                    1
+                )
 
             );
 
@@ -1150,12 +1113,13 @@ export function calculateFaraid(
             sonsCollective,
 
             daughtersCollective
+
         };
 
 
-        /*
-         * Individual sons.
-         */
+        /* ---------------------------------------------
+           INDIVIDUAL SONS
+        --------------------------------------------- */
 
         for (
             let index = 1;
@@ -1188,14 +1152,17 @@ export function calculateFaraid(
                     ),
 
                 instruction:
-                    `Allocate ${fractionToString(sonShare)} of the distributable estate to Son ${index}.`
+                    `Allocate ${fractionToString(
+                        sonShare
+                    )} of the distributable estate to Son ${index}.`
+
             });
         }
 
 
-        /*
-         * Individual daughters.
-         */
+        /* ---------------------------------------------
+           INDIVIDUAL DAUGHTERS
+        --------------------------------------------- */
 
         for (
             let index = 1;
@@ -1228,14 +1195,110 @@ export function calculateFaraid(
                     ),
 
                 instruction:
-                    `Allocate ${fractionToString(daughterShare)} of the distributable estate to Daughter ${index}.`
+                    `Allocate ${fractionToString(
+                        daughterShare
+                    )} of the distributable estate to Daughter ${index}.`
+
             });
         }
     }
 
 
     /* =====================================================
-       FATHER RESIDUE WHEN NO DESCENDANTS
+       FATHER WITH DAUGHTERS BUT NO SONS
+    ===================================================== */
+
+    if (
+
+        father &&
+
+        daughters > 0 &&
+
+        sons === 0
+
+    ) {
+
+        const fatherFixed =
+            fraction(1, 6);
+
+
+        /*
+         * The father is already present in
+         * finalEntitlements as a fixed share.
+         *
+         * The remaining residue is then added
+         * to the father's entitlement.
+         */
+
+        const fatherFixedIndex =
+            finalEntitlements.findIndex(
+
+                item =>
+                    item.heir === "Father"
+
+            );
+
+
+        const fatherResiduary =
+            residue;
+
+
+        if (
+            fatherResiduary.numerator > 0
+        ) {
+
+            if (
+                fatherFixedIndex >= 0
+            ) {
+
+                const existing =
+                    finalEntitlements[
+                        fatherFixedIndex
+                    ];
+
+
+                existing.additionalFraction =
+                    fatherResiduary;
+
+
+                existing.additionalShare =
+                    fractionToString(
+                        fatherResiduary
+                    );
+
+
+                existing.totalFraction =
+                    addFractions(
+
+                        fatherFixed,
+
+                        fatherResiduary
+
+                    );
+
+
+                existing.share =
+                    fractionToString(
+
+                        existing.totalFraction
+
+                    );
+
+
+                existing.instruction =
+                    `Allocate the father's fixed 1/6 share plus the remaining ${fractionToString(
+                        fatherResiduary
+                    )} of the distributable estate. Total father entitlement: ${fractionToString(
+                        existing.totalFraction
+                    )}.`;
+
+            }
+        }
+    }
+
+
+    /* =====================================================
+       FATHER RESIDUE WITHOUT DESCENDANTS
     ===================================================== */
 
     if (
@@ -1245,12 +1308,17 @@ export function calculateFaraid(
 
         const fatherAlreadyListed =
             finalEntitlements.some(
+
                 item =>
-                    item.heir === "Father"
+                    item.heir ===
+                    "Father"
+
             );
 
 
-        if (!fatherAlreadyListed) {
+        if (
+            !fatherAlreadyListed
+        ) {
 
             finalEntitlements.push({
 
@@ -1277,27 +1345,29 @@ export function calculateFaraid(
                     ),
 
                 instruction:
-                    `Allocate the remaining ${fractionToString(residue)} of the distributable estate to the father.`
+                    `Allocate the remaining ${fractionToString(
+                        residue
+                    )} of the distributable estate to the father.`
+
             });
         }
     }
 
 
     /* =====================================================
-       DAUGHTERS ONLY — RESIDUE AFTER FIXED SHARES
+       DAUGHTERS-ONLY REMAINDER
     ===================================================== */
 
-    /*
-     * If daughters receive a fixed share and there is
-     * additional residue, this simplified engine flags
-     * the matter rather than silently applying a disputed
-     * doctrine.
-     */
-
     if (
+
         daughters > 0 &&
+
         sons === 0 &&
-        residue.numerator > 0
+
+        residue.numerator > 0 &&
+
+        !father
+
     ) {
 
         reviewFlags.push({
@@ -1309,13 +1379,93 @@ export function calculateFaraid(
                 "review",
 
             message:
-                "Daughters have a fixed share and additional estate residue remains. The final treatment of the remainder requires the applicable jurisprudential framework."
+                "Daughters have a fixed share and additional estate residue remains. The treatment of the remainder requires the applicable jurisprudential framework."
+
         });
     }
 
 
     /* =====================================================
-       FINAL STATUS
+       FINAL ENTITLEMENT TOTAL
+    ===================================================== */
+
+    const totalDistributed =
+        finalEntitlements.reduce(
+
+            (
+                total,
+                item
+            ) => {
+
+                const base =
+                    item.totalFraction ||
+                    item.fraction ||
+                    fraction(0, 1);
+
+
+                return addFractions(
+
+                    total,
+
+                    base
+
+                );
+
+            },
+
+            fraction(0, 1)
+
+        );
+
+
+    /*
+     * If a father has both fixed and additional
+     * residuary portions, replace his fixed amount
+     * with the combined amount when calculating
+     * the total.
+     */
+
+    const fatherCombined =
+        finalEntitlements.find(
+
+            item =>
+                item.heir === "Father" &&
+                item.totalFraction
+
+        );
+
+
+    let correctedTotal =
+        totalDistributed;
+
+
+    if (
+        fatherCombined
+    ) {
+
+        correctedTotal =
+            subtractFractions(
+
+                totalDistributed,
+
+                fatherCombined.fraction
+
+            );
+
+
+        correctedTotal =
+            addFractions(
+
+                correctedTotal,
+
+                fatherCombined.totalFraction
+
+            );
+    }
+
+
+    /* =====================================================
+       STATUS
     ===================================================== */
 
     let status =
@@ -1333,8 +1483,11 @@ export function calculateFaraid(
 
     if (
         reviewFlags.some(
+
             flag =>
-                flag.severity === "high"
+                flag.severity ===
+                "high"
+
         )
     ) {
 
@@ -1344,36 +1497,42 @@ export function calculateFaraid(
 
 
     /* =====================================================
-       SHARE CALCULATION OBJECT
+       SHARE CALCULATION
     ===================================================== */
 
-    const fixedShareEntries =
-        eligible.filter(
-            item =>
-                item.category === "fixed"
-        );
-
-
     const fixedShareBreakdown =
-        fixedShareEntries.map(
-            item => ({
 
-                heir:
-                    item.heir,
+        eligible
 
-                count:
-                    item.count,
+            .filter(
 
-                share:
-                    fractionToString(
+                item =>
+                    item.category ===
+                    "fixed"
+
+            )
+
+            .map(
+
+                item => ({
+
+                    heir:
+                        item.heir,
+
+                    count:
+                        item.count,
+
+                    share:
+                        fractionToString(
+                            item.fraction
+                        ),
+
+                    fraction:
                         item.fraction
-                    ),
 
-                fraction:
-                    item.fraction
+                })
 
-            })
-        );
+            );
 
 
     const shareCalculation = {
@@ -1384,7 +1543,8 @@ export function calculateFaraid(
         fixedShares:
             fixedShareBreakdown,
 
-        totalFixedShares,
+        totalFixedShares:
+            totalFixedShares,
 
         remainder:
             residue,
@@ -1392,25 +1552,17 @@ export function calculateFaraid(
         residuary:
             residuaryCalculation,
 
-        finalEntitlements,
+        finalEntitlements:
+            finalEntitlements,
 
         totalDistributed:
-            finalEntitlements.reduce(
+            correctedTotal
 
-                (total, item) =>
-
-                    addFractions(
-                        total,
-                        item.fraction
-                    ),
-
-                fraction(0, 1)
-            )
     };
 
 
     /* =====================================================
-       RETURN RESULT
+       FINAL RESULT
     ===================================================== */
 
     return {
@@ -1432,13 +1584,15 @@ export function calculateFaraid(
 
         shareCalculation,
 
+        finalEntitlements,
+
         notes: [
 
             "This engine provides a structured framework for supported common cases.",
 
             "Fractions represent portions of the distributable estate after applicable obligations have been settled.",
 
-            "The engine intentionally flags complex jurisprudential cases instead of silently producing a potentially incorrect result.",
+            "Complex jurisprudential cases are intentionally flagged instead of being silently resolved.",
 
             "Final inheritance determination should be reviewed by a qualified Islamic scholar and, where necessary, the relevant legal authority."
 
