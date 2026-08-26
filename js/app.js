@@ -611,8 +611,944 @@ function renderFaraidResult(result) {
         $("faraidResult").innerHTML = "";
 
         return;
+    }
+
+
+    const eligible =
+        result.eligible || [];
+
+    const excluded =
+        result.excluded || [];
+
+    const reviewFlags =
+        result.reviewFlags || [];
+
+    const calculation =
+        result.shareCalculation || null;
+
+
+    /*
+     * ------------------------------------------------------
+     * ELIGIBLE HEIRS
+     * ------------------------------------------------------
+     */
+
+    let html = `
+
+        <div class="card faraid-result-card">
+
+            <div class="faraid-result-header">
+
+                <div>
+
+                    <div class="eyebrow">
+                        STAGE 4
+                    </div>
+
+                    <h3>
+                        Faraid Framework Result
+                    </h3>
+
+                    <p class="muted">
+                        Eligibility, governing rule, exact fractional
+                        entitlement and distribution instructions.
+                    </p>
+
+                </div>
+
+                <span class="
+                    faraid-status
+                    ${result.status === "supported-common-framework"
+                        ? "status-supported"
+                        : "status-review"}
+                ">
+                    ${escapeHTML(
+                        result.status
+                    )}
+                </span>
+
+            </div>
+
+    `;
+
+
+    if (eligible.length) {
+
+        html += `
+
+            <h4 class="faraid-subheading">
+                Eligible / Supported Heirs
+            </h4>
+
+            <div class="table-wrapper faraid-table-wrapper">
+
+                <table class="faraid-table">
+
+                    <thead>
+
+                        <tr>
+
+                            <th>
+                                Heir
+                            </th>
+
+                            <th>
+                                Eligibility
+                            </th>
+
+                            <th>
+                                Rule (Source)
+                            </th>
+
+                            <th>
+                                Classification
+                            </th>
+
+                            <th>
+                                Exact Fractional Entitlement
+                            </th>
+
+                            <th>
+                                Distribution Instructions
+                            </th>
+
+                        </tr>
+
+                    </thead>
+
+                    <tbody>
+
+                        ${eligible.map(item => {
+
+                            let exactShare =
+                                "Residue";
+
+
+                            let instruction =
+                                "Participates in the residuary estate according to the applicable distribution rule.";
+
+
+                            /*
+                             * Fixed entitlement.
+                             */
+
+                            if (
+                                item.category === "fixed" &&
+                                item.fraction
+                            ) {
+
+                                exactShare =
+                                    fractionDisplay(
+                                        item.fraction
+                                    );
+
+
+                                instruction =
+                                    `Allocate ${escapeHTML(
+                                        fractionDisplay(
+                                            item.fraction
+                                        )
+                                    )} of the distributable estate to ${escapeHTML(
+                                        item.heir.toLowerCase()
+                                    )}.`;
+                            }
+
+
+                            /*
+                             * Children with sons.
+                             */
+
+                            if (
+                                item.heir ===
+                                    "Sons"
+                            ) {
+
+                                if (
+                                    calculation &&
+                                    calculation.residuary
+                                ) {
+
+                                    const collective =
+                                        calculation
+                                            .residuary
+                                            .sonsCollective;
+
+
+                                    exactShare =
+                                        `${fractionDisplay(
+                                            collective
+                                        )} collectively`;
+
+
+                                    instruction =
+                                        `Remainder after fixed shares. Divide the sons' collective entitlement equally between ${item.count} sons, with each son receiving ${fractionDisplay(
+                                            calculation
+                                                .residuary
+                                                .individualSonShare
+                                        )}.`;
+                                }
+                            }
+
+
+                            /*
+                             * Daughters with sons.
+                             */
+
+                            if (
+                                item.heir ===
+                                    "Daughters with sons"
+                            ) {
+
+                                if (
+                                    calculation &&
+                                    calculation.residuary
+                                ) {
+
+                                    const collective =
+                                        calculation
+                                            .residuary
+                                            .daughtersCollective;
+
+
+                                    exactShare =
+                                        `${fractionDisplay(
+                                            collective
+                                        )} collectively`;
+
+
+                                    instruction =
+                                        `Remainder after fixed shares. Each daughter receives one unit in the 2:1 ratio with sons. Each daughter receives ${fractionDisplay(
+                                            calculation
+                                                .residuary
+                                                .individualDaughterShare
+                                        )}.`;
+                                }
+                            }
+
+
+                            return `
+
+                                <tr>
+
+                                    <td>
+
+                                        <strong>
+                                            ${escapeHTML(
+                                                item.heir
+                                            )}
+                                        </strong>
+
+                                        ${
+                                            item.count > 1
+
+                                                ? `<br>
+                                                   <small>
+                                                       ${item.count} persons
+                                                   </small>`
+
+                                                : ""
+                                        }
+
+                                    </td>
+
+
+                                    <td>
+
+                                        <span class="
+                                            badge
+                                            badge-eligible
+                                        ">
+                                            Eligible
+                                        </span>
+
+                                    </td>
+
+
+                                    <td>
+
+                                        <div class="rule-cell">
+
+                                            <strong>
+                                                ${item.category === "fixed"
+                                                    ? "Qur'anic fixed share"
+                                                    : "Residuary rule"
+                                                }
+                                            </strong>
+
+                                            <small>
+                                                ${escapeHTML(
+                                                    item.source ||
+                                                    "Applicable Faraid rule"
+                                                )}
+                                            </small>
+
+                                        </div>
+
+                                    </td>
+
+
+                                    <td>
+
+                                        <span class="
+                                            badge
+                                            ${
+                                                item.category === "fixed"
+
+                                                    ? "badge-fixed"
+
+                                                    : "badge-residuary"
+                                            }
+                                        ">
+
+                                            ${
+                                                item.category === "fixed"
+
+                                                    ? "Fixed Share"
+
+                                                    : "Residuary"
+                                            }
+
+                                        </span>
+
+                                    </td>
+
+
+                                    <td>
+
+                                        <strong class="exact-share">
+
+                                            ${exactShare}
+
+                                        </strong>
+
+                                        ${
+                                            item.fraction
+
+                                                ? `<small class="decimal-share">
+                                                    (${fractionDecimalDisplay(
+                                                        item.fraction
+                                                    )})
+                                                   </small>`
+
+                                                : ""
+                                        }
+
+                                    </td>
+
+
+                                    <td>
+
+                                        ${instruction}
+
+                                    </td>
+
+                                </tr>
+
+                            `;
+
+                        }).join("")}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        `;
 
     }
+
+
+    /*
+     * ------------------------------------------------------
+     * SHARE CALCULATION
+     * ------------------------------------------------------
+     */
+
+    if (calculation) {
+
+        html += `
+
+            <div class="share-calculation">
+
+                <h4 class="faraid-subheading">
+                    Share Calculation
+                </h4>
+
+
+                <div class="calculation-flow">
+
+
+                    <!-- STEP 1 -->
+
+                    <div class="calculation-card">
+
+                        <div class="calculation-card-header">
+
+                            Step 1: Fixed Shares
+
+                        </div>
+
+                        <div class="calculation-card-body">
+
+                            ${
+                                calculation.fixedShares.length
+
+                                    ? calculation.fixedShares
+                                        .map(item => `
+
+                                            <div class="calculation-line">
+
+                                                <span>
+                                                    ${escapeHTML(
+                                                        item.heir
+                                                    )}
+                                                </span>
+
+                                                <strong>
+                                                    ${fractionDisplay(
+                                                        item.fraction
+                                                    )}
+                                                </strong>
+
+                                            </div>
+
+                                        `)
+                                        .join("")
+
+                                    : `
+
+                                        <div class="muted">
+                                            No fixed shares recorded.
+                                        </div>
+
+                                    `
+                            }
+
+
+                            <div class="calculation-line calculation-total">
+
+                                <span>
+                                    Total Fixed Shares
+                                </span>
+
+                                <strong>
+                                    ${fractionDisplay(
+                                        calculation.totalFixedShares
+                                    )}
+                                </strong>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="calculation-arrow">
+                        →
+                    </div>
+
+
+                    <!-- STEP 2 -->
+
+                    <div class="calculation-card">
+
+                        <div class="calculation-card-header">
+
+                            Step 2: Remainder
+
+                        </div>
+
+                        <div class="calculation-card-body">
+
+                            <div class="calculation-line">
+
+                                <span>
+                                    Estate (Whole)
+                                </span>
+
+                                <strong>
+                                    ${fractionDisplay(
+                                        calculation.whole
+                                    )}
+                                </strong>
+
+                            </div>
+
+
+                            <div class="calculation-line">
+
+                                <span>
+                                    Minus Fixed Shares
+                                </span>
+
+                                <strong>
+                                    ${fractionDisplay(
+                                        calculation.totalFixedShares
+                                    )}
+                                </strong>
+
+                            </div>
+
+
+                            <div class="calculation-line calculation-total">
+
+                                <span>
+                                    Remainder
+                                </span>
+
+                                <strong>
+                                    ${fractionDisplay(
+                                        calculation.remainder
+                                    )}
+                                </strong>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                    ${
+                        calculation.residuary
+
+                            ? `
+
+                                <div class="calculation-arrow">
+                                    →
+                                </div>
+
+
+                                <!-- STEP 3 -->
+
+                                <div class="calculation-card">
+
+                                    <div class="calculation-card-header">
+
+                                        Step 3: Residuary Distribution
+
+                                    </div>
+
+
+                                    <div class="calculation-card-body">
+
+                                        <div class="calculation-line">
+
+                                            <span>
+                                                Residuary to be distributed
+                                            </span>
+
+                                            <strong>
+                                                ${fractionDisplay(
+                                                    calculation
+                                                        .residuary
+                                                        .residue
+                                                )}
+                                            </strong>
+
+                                        </div>
+
+
+                                        <div class="calculation-line">
+
+                                            <span>
+                                                Units
+                                                (${calculation.residuary.sons} sons × 2)
+                                                +
+                                                (${calculation.residuary.daughters} daughters × 1)
+                                            </span>
+
+                                            <strong>
+                                                ${calculation.residuary.units}
+                                                units
+                                            </strong>
+
+                                        </div>
+
+
+                                        <div class="calculation-line calculation-total">
+
+                                            <span>
+                                                Value per Unit
+                                            </span>
+
+                                            <strong>
+                                                ${fractionDisplay(
+                                                    calculation
+                                                        .residuary
+                                                        .valuePerUnit
+                                                )}
+                                            </strong>
+
+                                        </div>
+
+
+                                        <div class="calculation-explanation">
+
+                                            Each son receives two units.
+                                            Each daughter receives one unit.
+
+                                        </div>
+
+                                    </div>
+
+                                </div>
+
+
+                                <div class="calculation-arrow">
+                                    →
+                                </div>
+
+
+                                <!-- STEP 4 -->
+
+                                <div class="calculation-card">
+
+                                    <div class="calculation-card-header">
+
+                                        Final Entitlements
+
+                                    </div>
+
+
+                                    <div class="calculation-card-body">
+
+                                        ${calculation
+                                            .residuary
+                                            .sons > 0
+
+                                            ? `
+
+                                                <div class="calculation-line">
+
+                                                    <span>
+                                                        Each Son
+                                                    </span>
+
+                                                    <strong>
+                                                        ${fractionDisplay(
+                                                            calculation
+                                                                .residuary
+                                                                .individualSonShare
+                                                        )}
+                                                    </strong>
+
+                                                </div>
+
+                                            `
+
+                                            : ""
+                                        }
+
+
+                                        ${calculation
+                                            .residuary
+                                            .daughters > 0
+
+                                            ? `
+
+                                                <div class="calculation-line">
+
+                                                    <span>
+                                                        Each Daughter
+                                                    </span>
+
+                                                    <strong>
+                                                        ${fractionDisplay(
+                                                            calculation
+                                                                .residuary
+                                                                .individualDaughterShare
+                                                        )}
+                                                    </strong>
+
+                                                </div>
+
+                                            `
+
+                                            : ""
+                                        }
+
+
+                                        <div class="calculation-line calculation-total">
+
+                                            <span>
+                                                Total Distributed
+                                            </span>
+
+                                            <strong>
+                                                ${fractionDisplay(
+                                                    calculation.totalDistributed
+                                                )}
+                                            </strong>
+
+                                        </div>
+
+                                    </div>
+
+                                </div>
+
+                            `
+
+                            : `
+
+                                <div class="calculation-card">
+
+                                    <div class="calculation-card-header">
+
+                                        Remaining Estate
+
+                                    </div>
+
+                                    <div class="calculation-card-body">
+
+                                        <div class="calculation-line calculation-total">
+
+                                            <span>
+                                                Remainder
+                                            </span>
+
+                                            <strong>
+                                                ${fractionDisplay(
+                                                    calculation.remainder
+                                                )}
+                                            </strong>
+
+                                        </div>
+
+                                    </div>
+
+                                </div>
+
+                            `
+                    }
+
+                </div>
+
+            </div>
+
+        `;
+
+    }
+
+
+    /*
+     * ------------------------------------------------------
+     * EXCLUDED HEIRS
+     * ------------------------------------------------------
+     */
+
+    if (excluded.length) {
+
+        html += `
+
+            <div class="excluded-section">
+
+                <h4 class="faraid-subheading">
+                    Excluded Heirs
+                </h4>
+
+                <div class="table-wrapper">
+
+                    <table>
+
+                        <thead>
+
+                            <tr>
+
+                                <th>
+                                    Heir
+                                </th>
+
+                                <th>
+                                    Reason
+                                </th>
+
+                            </tr>
+
+                        </thead>
+
+                        <tbody>
+
+                            ${excluded.map(item => `
+
+                                <tr>
+
+                                    <td>
+
+                                        <span class="
+                                            badge
+                                            badge-excluded
+                                        ">
+
+                                            ${escapeHTML(
+                                                item.heir
+                                            )}
+
+                                        </span>
+
+                                    </td>
+
+                                    <td>
+
+                                        ${escapeHTML(
+                                            item.reason
+                                        )}
+
+                                    </td>
+
+                                </tr>
+
+                            `).join("")}
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            </div>
+
+        `;
+
+    }
+
+
+    /*
+     * ------------------------------------------------------
+     * REVIEW FLAGS
+     * ------------------------------------------------------
+     */
+
+    if (reviewFlags.length) {
+
+        html += `
+
+            <div class="
+                notice
+                notice-warning
+                faraid-review-notice
+            ">
+
+                <strong>
+                    Specialist Review Required
+                </strong>
+
+                <ul>
+
+                    ${reviewFlags.map(flag => `
+
+                        <li>
+                            ${escapeHTML(
+                                flag.message
+                            )}
+                        </li>
+
+                    `).join("")}
+
+                </ul>
+
+            </div>
+
+        `;
+
+    }
+
+
+    /*
+     * ------------------------------------------------------
+     * IMPORTANT DISCLAIMER
+     * ------------------------------------------------------
+     */
+
+    html += `
+
+            <div class="
+                notice
+                notice-info
+                faraid-important
+            ">
+
+                <strong>
+                    Important:
+                </strong>
+
+                This is a Faraid framework, not a final legal
+                or scholarly determination. Fractions refer to
+                the distributable estate after applicable debts,
+                funeral/burial expenses and valid obligations
+                have been settled.
+
+            </div>
+
+
+            <details class="faraid-notes">
+
+                <summary>
+                    Notes & Disclaimers
+                </summary>
+
+                <div class="faraid-notes-body">
+
+                    <p>
+                        The system is designed to establish a
+                        structured inheritance framework and
+                        property-distribution blueprint.
+                    </p>
+
+                    <p>
+                        It does not replace a qualified Islamic
+                        scholar, estate administrator, lawyer,
+                        court or other competent authority.
+                    </p>
+
+                    <p>
+                        Complex cases are deliberately flagged
+                        for specialist review rather than being
+                        silently resolved.
+                    </p>
+
+                </div>
+
+            </details>
+
+
+        </div>
+
+    `;
+
+
+    $("faraidResult").innerHTML =
+        html;
+}
+
+
+/* =========================================================
+   FRACTION DISPLAY HELPERS
+========================================================= */
+
+function fractionDisplay(value) {
+
+    if (!value) {
+        return "—";
+    }
+
+    return `${value.numerator}/${value.denominator}`;
+}
+
+
+function fractionDecimalDisplay(value) {
+
+    if (!value) {
+        return "";
+    }
+
+    return (
+        value.numerator /
+        value.denominator
+    ).toFixed(6);
+}
 
 
     const eligible =
