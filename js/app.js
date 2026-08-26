@@ -14,21 +14,44 @@ import {
 } from "./blueprint.js";
 
 
-let currentCase =
-    createEmptyCase();
+/* =========================================================
+   APPLICATION STATE
+========================================================= */
 
+let currentCase = createEmptyCase();
 
 let assetCounter = 0;
-
 let propertyCounter = 0;
 
 
-/* --------------------------------------------------
+/* =========================================================
    DOM HELPERS
--------------------------------------------------- */
+========================================================= */
 
 function $(id) {
     return document.getElementById(id);
+}
+
+
+function getValue(id, fallback = "") {
+
+    const element = $(id);
+
+    if (!element) {
+        return fallback;
+    }
+
+    return element.value ?? fallback;
+}
+
+
+function setElementText(id, value) {
+
+    const element = $(id);
+
+    if (element) {
+        element.textContent = value ?? "";
+    }
 }
 
 
@@ -43,25 +66,66 @@ function escapeHTML(value) {
 }
 
 
-/* --------------------------------------------------
+/* =========================================================
+   FRACTION DISPLAY HELPERS
+========================================================= */
+
+function fractionDisplay(value) {
+
+    if (
+        !value ||
+        typeof value !== "object" ||
+        value.numerator === undefined ||
+        value.denominator === undefined
+    ) {
+        return "—";
+    }
+
+    return `${value.numerator}/${value.denominator}`;
+}
+
+
+function fractionDecimalDisplay(value) {
+
+    if (
+        !value ||
+        typeof value !== "object" ||
+        !Number.isFinite(Number(value.numerator)) ||
+        !Number.isFinite(Number(value.denominator)) ||
+        Number(value.denominator) === 0
+    ) {
+        return "";
+    }
+
+    return (
+        Number(value.numerator) /
+        Number(value.denominator)
+    ).toFixed(6);
+}
+
+
+/* =========================================================
    ASSET MANAGEMENT
--------------------------------------------------- */
+========================================================= */
 
 function addAsset(asset = {}) {
 
+    const container = $("assetsContainer");
+
+    if (!container) {
+        console.warn(
+            "Faraid Planner: #assetsContainer not found."
+        );
+        return;
+    }
+
     assetCounter++;
 
-    const row =
-        document.createElement("div");
+    const row = document.createElement("div");
 
+    row.className = "asset-row";
 
-    row.className =
-        "asset-row";
-
-
-    row.dataset.assetId =
-        assetCounter;
-
+    row.dataset.assetId = assetCounter;
 
     row.innerHTML = `
 
@@ -155,17 +219,17 @@ function addAsset(asset = {}) {
 
     `;
 
-
-    $("assetsContainer")
-        .appendChild(row);
-
-
-    const select =
-        row.querySelector(".asset-type");
+    container.appendChild(row);
 
 
     if (asset.type) {
-        select.value = asset.type;
+
+        const select =
+            row.querySelector(".asset-type");
+
+        if (select) {
+            select.value = asset.type;
+        }
     }
 }
 
@@ -173,28 +237,39 @@ function addAsset(asset = {}) {
 function getAssets() {
 
     return [
-        ...document.querySelectorAll(
-            ".asset-row"
-        )
+        ...document.querySelectorAll(".asset-row")
     ]
-        .map(row => ({
+        .map(row => {
 
-            name:
-                row.querySelector(
-                    ".asset-name"
-                ).value.trim(),
+            const name =
+                row.querySelector(".asset-name");
 
-            type:
-                row.querySelector(
-                    ".asset-type"
-                ).value,
+            const type =
+                row.querySelector(".asset-type");
 
-            notes:
-                row.querySelector(
-                    ".asset-notes"
-                ).value.trim()
+            const notes =
+                row.querySelector(".asset-notes");
 
-        }))
+            return {
+
+                name:
+                    name
+                        ? name.value.trim()
+                        : "",
+
+                type:
+                    type
+                        ? type.value
+                        : "Other",
+
+                notes:
+                    notes
+                        ? notes.value.trim()
+                        : ""
+
+            };
+
+        })
         .filter(asset =>
             asset.name ||
             asset.notes
@@ -202,25 +277,32 @@ function getAssets() {
 }
 
 
-/* --------------------------------------------------
-   PROPERTY PLANS
--------------------------------------------------- */
+/* =========================================================
+   PROPERTY ALLOCATION PLANS
+========================================================= */
 
 function addPropertyPlan(plan = {}) {
+
+    const container =
+        $("propertyPlansContainer");
+
+    if (!container) {
+        console.warn(
+            "Faraid Planner: #propertyPlansContainer not found."
+        );
+        return;
+    }
 
     propertyCounter++;
 
     const row =
         document.createElement("div");
 
-
     row.className =
         "property-row";
 
-
     row.dataset.propertyId =
         propertyCounter;
-
 
     row.innerHTML = `
 
@@ -302,17 +384,17 @@ function addPropertyPlan(plan = {}) {
 
     `;
 
-
-    $("propertyPlansContainer")
-        .appendChild(row);
+    container.appendChild(row);
 
 
     if (plan.method) {
 
-        row.querySelector(
-            ".property-method"
-        ).value = plan.method;
+        const method =
+            row.querySelector(".property-method");
 
+        if (method) {
+            method.value = plan.method;
+        }
     }
 }
 
@@ -324,24 +406,43 @@ function getPropertyPlans() {
             ".property-row"
         )
     ]
-        .map(row => ({
+        .map(row => {
 
-            property:
+            const property =
                 row.querySelector(
                     ".property-name"
-                ).value.trim(),
+                );
 
-            method:
+            const method =
                 row.querySelector(
                     ".property-method"
-                ).value,
+                );
 
-            notes:
+            const notes =
                 row.querySelector(
                     ".property-notes"
-                ).value.trim()
+                );
 
-        }))
+            return {
+
+                property:
+                    property
+                        ? property.value.trim()
+                        : "",
+
+                method:
+                    method
+                        ? method.value
+                        : "Pending review",
+
+                notes:
+                    notes
+                        ? notes.value.trim()
+                        : ""
+
+            };
+
+        })
         .filter(plan =>
             plan.property ||
             plan.notes
@@ -349,26 +450,36 @@ function getPropertyPlans() {
 }
 
 
-/* --------------------------------------------------
+/* =========================================================
    FAMILY INPUT
--------------------------------------------------- */
+========================================================= */
 
 function isYes(id) {
 
-    return $(id).value === "1";
+    const element = $(id);
+
+    if (!element) {
+        return false;
+    }
+
+    return element.value === "1";
 }
 
 
 function getNumber(id) {
 
-    const value =
-        Number($(id).value);
+    const element = $(id);
 
+    if (!element) {
+        return 0;
+    }
+
+    const value =
+        Number(element.value);
 
     if (!Number.isFinite(value)) {
         return 0;
     }
-
 
     return Math.max(
         0,
@@ -421,9 +532,9 @@ function getFamilyData() {
 }
 
 
-/* --------------------------------------------------
+/* =========================================================
    CASE COLLECTION
--------------------------------------------------- */
+========================================================= */
 
 function collectCaseFromUI() {
 
@@ -432,22 +543,22 @@ function collectCaseFromUI() {
 
 
     data.caseName =
-        $("caseName").value.trim();
+        getValue("caseName");
 
 
     data.deceased = {
 
         name:
-            $("deceasedName").value.trim(),
+            getValue("deceasedName"),
 
         deathDate:
-            $("deathDate").value,
+            getValue("deathDate"),
 
         jurisdiction:
-            $("jurisdiction").value.trim(),
+            getValue("jurisdiction"),
 
         administrator:
-            $("administrator").value.trim()
+            getValue("administrator")
 
     };
 
@@ -463,13 +574,13 @@ function collectCaseFromUI() {
     data.obligations = {
 
         debts:
-            $("debts").value.trim(),
+            getValue("debts"),
 
         funeralExpenses:
-            $("funeralExpenses").value.trim(),
+            getValue("funeralExpenses"),
 
         wasiyyah:
-            $("wasiyyah").value.trim()
+            getValue("wasiyyah")
 
     };
 
@@ -485,13 +596,13 @@ function collectCaseFromUI() {
     data.settlement = {
 
         notes:
-            $("settlementNotes").value.trim(),
+            getValue("settlementNotes"),
 
         scholarReviewer:
-            $("scholarReviewer").value.trim(),
+            getValue("scholarReviewer"),
 
         legalReviewer:
-            $("legalReviewer").value.trim()
+            getValue("legalReviewer")
 
     };
 
@@ -513,22 +624,28 @@ function collectCaseFromUI() {
         ]);
 
 
+    /*
+     * Preserve the latest calculated result.
+     *
+     * This is deliberately copied from currentCase rather
+     * than creating a new result automatically.
+     */
+
     data.faraidResult =
-        currentCase.faraidResult;
+        currentCase.faraidResult || null;
 
 
     return data;
 }
 
 
-/* --------------------------------------------------
+/* =========================================================
    CHECKBOXES
--------------------------------------------------- */
+========================================================= */
 
 function collectChecks(names) {
 
     const result = {};
-
 
     names.forEach(name => {
 
@@ -537,14 +654,12 @@ function collectChecks(names) {
                 `[data-check="${name}"]`
             );
 
-
         result[name] =
             element
-                ? element.checked
+                ? Boolean(element.checked)
                 : false;
 
     });
-
 
     return result;
 }
@@ -560,7 +675,6 @@ function applyChecks(checks = {}) {
                     `[data-check="${name}"]`
                 );
 
-
             if (element) {
 
                 element.checked =
@@ -569,19 +683,73 @@ function applyChecks(checks = {}) {
             }
 
         });
-
 }
 
 
-/* --------------------------------------------------
-   FARAID
--------------------------------------------------- */
+/* =========================================================
+   FARAID FAMILY FIELD IDENTIFIERS
+========================================================= */
+
+const FARAID_FIELD_IDS = new Set([
+
+    "husband",
+    "wives",
+    "sons",
+    "daughters",
+    "father",
+    "mother",
+    "paternalGrandfather",
+    "maternalGrandmother",
+    "fullBrothers",
+    "fullSisters",
+    "maternalSiblings",
+    "sonGrandchildren"
+
+]);
+
+
+function invalidateFaraidResult() {
+
+    if (!currentCase.faraidResult) {
+        return;
+    }
+
+    currentCase.faraidResult = null;
+
+    const resultContainer =
+        $("faraidResult");
+
+    if (resultContainer) {
+
+        resultContainer.innerHTML = `
+
+            <div class="notice notice-warning">
+
+                <strong>
+                    Faraid result needs to be recalculated.
+                </strong>
+
+                <p>
+                    The surviving-heir information has changed.
+                    Click <strong>Determine Faraid Framework</strong>
+                    to calculate the updated entitlement.
+                </p>
+
+            </div>
+
+        `;
+    }
+}
+
+
+/* =========================================================
+   FARAID CALCULATION
+========================================================= */
 
 function determineFaraid() {
 
     const resultContainer =
         $("faraidResult");
-
 
     if (!resultContainer) {
 
@@ -595,6 +763,28 @@ function determineFaraid() {
         getFamilyData();
 
 
+    /*
+     * Basic sanity check.
+     */
+
+    const spouseCount =
+        (family.husband ? 1 : 0) +
+        family.wives;
+
+
+    if (spouseCount > 1) {
+
+        /*
+         * Husband and wives cannot both describe the deceased's
+         * surviving spouse configuration.
+         */
+
+        throw new Error(
+            "The family information contains both a husband and one or more wives. Please correct the spouse information."
+        );
+    }
+
+
     console.log(
         "Faraid input:",
         family
@@ -605,6 +795,14 @@ function determineFaraid() {
         calculateFaraid(
             family
         );
+
+
+    if (!result) {
+
+        throw new Error(
+            "The Faraid engine returned no result."
+        );
+    }
 
 
     console.log(
@@ -628,13 +826,8 @@ function determineFaraid() {
 
     updateDashboard();
 
-
     renderActions();
 
-
-    /*
-     * Scroll the user to the result.
-     */
 
     resultContainer.scrollIntoView({
         behavior: "smooth",
@@ -644,34 +837,56 @@ function determineFaraid() {
 }
 
 
+/* =========================================================
+   FARAID RESULT RENDERING
+========================================================= */
+
 function renderFaraidResult(result) {
+
+    const resultContainer =
+        $("faraidResult");
+
+    if (!resultContainer) {
+        return;
+    }
+
 
     if (!result) {
 
-        $("faraidResult").innerHTML = "";
+        resultContainer.innerHTML = "";
 
         return;
     }
 
 
     const eligible =
-        result.eligible || [];
+        Array.isArray(result.eligible)
+            ? result.eligible
+            : [];
+
 
     const excluded =
-        result.excluded || [];
+        Array.isArray(result.excluded)
+            ? result.excluded
+            : [];
+
 
     const reviewFlags =
-        result.reviewFlags || [];
+        Array.isArray(result.reviewFlags)
+            ? result.reviewFlags
+            : [];
+
 
     const calculation =
         result.shareCalculation || null;
 
 
-    /*
-     * ------------------------------------------------------
-     * ELIGIBLE HEIRS
-     * ------------------------------------------------------
-     */
+    const statusClass =
+        result.status ===
+            "supported-common-framework"
+            ? "status-supported"
+            : "status-review";
+
 
     let html = `
 
@@ -698,12 +913,11 @@ function renderFaraidResult(result) {
 
                 <span class="
                     faraid-status
-                    ${result.status === "supported-common-framework"
-                        ? "status-supported"
-                        : "status-review"}
+                    ${statusClass}
                 ">
                     ${escapeHTML(
-                        result.status
+                        result.status ||
+                        "Review required"
                     )}
                 </span>
 
@@ -711,6 +925,10 @@ function renderFaraidResult(result) {
 
     `;
 
+
+    /* =====================================================
+       ELIGIBLE HEIRS
+    ===================================================== */
 
     if (eligible.length) {
 
@@ -761,15 +979,22 @@ function renderFaraidResult(result) {
                         ${eligible.map(item => {
 
                             let exactShare =
-                                "Residue";
+                                item.fraction
+                                    ? fractionDisplay(
+                                        item.fraction
+                                    )
+                                    : (
+                                        item.share ||
+                                        "Residue"
+                                    );
 
 
                             let instruction =
-                                "Participates in the residuary estate according to the applicable distribution rule.";
+                                "Participates in the applicable inheritance distribution rule.";
 
 
                             /*
-                             * Fixed entitlement.
+                             * Fixed share.
                              */
 
                             if (
@@ -777,54 +1002,48 @@ function renderFaraidResult(result) {
                                 item.fraction
                             ) {
 
-                                exactShare =
-                                    fractionDisplay(
-                                        item.fraction
-                                    );
-
-
                                 instruction =
                                     `Allocate ${escapeHTML(
                                         fractionDisplay(
                                             item.fraction
                                         )
                                     )} of the distributable estate to ${escapeHTML(
-                                        item.heir.toLowerCase()
+                                        String(
+                                            item.heir ||
+                                            "this heir"
+                                        ).toLowerCase()
                                     )}.`;
                             }
 
 
                             /*
-                             * Children with sons.
+                             * Sons in residuary distribution.
                              */
 
                             if (
-                                item.heir ===
-                                    "Sons"
+                                item.heir === "Sons" &&
+                                calculation &&
+                                calculation.residuary
                             ) {
 
+                                const residuary =
+                                    calculation.residuary;
+
+
                                 if (
-                                    calculation &&
-                                    calculation.residuary
+                                    residuary.sons >
+                                    0
                                 ) {
-
-                                    const collective =
-                                        calculation
-                                            .residuary
-                                            .sonsCollective;
-
 
                                     exactShare =
                                         `${fractionDisplay(
-                                            collective
+                                            residuary.sonsCollective
                                         )} collectively`;
 
 
                                     instruction =
-                                        `Remainder after fixed shares. Divide the sons' collective entitlement equally between ${item.count} sons, with each son receiving ${fractionDisplay(
-                                            calculation
-                                                .residuary
-                                                .individualSonShare
+                                        `Remainder after fixed shares. Divide the sons' collective entitlement equally between ${item.count || residuary.sons} sons. Each son receives ${fractionDisplay(
+                                            residuary.individualSonShare
                                         )}.`;
                                 }
                             }
@@ -836,33 +1055,50 @@ function renderFaraidResult(result) {
 
                             if (
                                 item.heir ===
-                                    "Daughters with sons"
+                                    "Daughters with sons" &&
+                                calculation &&
+                                calculation.residuary
                             ) {
 
+                                const residuary =
+                                    calculation.residuary;
+
+
                                 if (
-                                    calculation &&
-                                    calculation.residuary
+                                    residuary.daughters >
+                                    0
                                 ) {
-
-                                    const collective =
-                                        calculation
-                                            .residuary
-                                            .daughtersCollective;
-
 
                                     exactShare =
                                         `${fractionDisplay(
-                                            collective
+                                            residuary.daughtersCollective
                                         )} collectively`;
 
 
                                     instruction =
-                                        `Remainder after fixed shares. Each daughter receives one unit in the 2:1 ratio with sons. Each daughter receives ${fractionDisplay(
-                                            calculation
-                                                .residuary
-                                                .individualDaughterShare
+                                        `Remainder after fixed shares. Each daughter receives one unit for every two units allocated to a son. Each daughter receives ${fractionDisplay(
+                                            residuary.individualDaughterShare
                                         )}.`;
                                 }
+                            }
+
+
+                            /*
+                             * Residuary item without a detailed calculation.
+                             */
+
+                            if (
+                                item.category ===
+                                    "residuary" &&
+                                !calculation?.residuary
+                            ) {
+
+                                exactShare =
+                                    item.share ||
+                                    "Residue";
+
+                                instruction =
+                                    "Receives the applicable residuary entitlement after fixed shares.";
                             }
 
 
@@ -874,18 +1110,20 @@ function renderFaraidResult(result) {
 
                                         <strong>
                                             ${escapeHTML(
-                                                item.heir
+                                                item.heir ||
+                                                "Unnamed heir"
                                             )}
                                         </strong>
 
                                         ${
                                             item.count > 1
-
-                                                ? `<br>
-                                                   <small>
-                                                       ${item.count} persons
-                                                   </small>`
-
+                                                ? `
+                                                    <br>
+                                                    <small>
+                                                        ${item.count}
+                                                        persons
+                                                    </small>
+                                                `
                                                 : ""
                                         }
 
@@ -909,15 +1147,18 @@ function renderFaraidResult(result) {
                                         <div class="rule-cell">
 
                                             <strong>
-                                                ${item.category === "fixed"
-                                                    ? "Qur'anic fixed share"
-                                                    : "Residuary rule"
+                                                ${
+                                                    item.category ===
+                                                        "fixed"
+                                                        ? "Qur'anic fixed share"
+                                                        : "Residuary rule"
                                                 }
                                             </strong>
 
                                             <small>
                                                 ${escapeHTML(
                                                     item.source ||
+                                                    item.reason ||
                                                     "Applicable Faraid rule"
                                                 )}
                                             </small>
@@ -932,19 +1173,17 @@ function renderFaraidResult(result) {
                                         <span class="
                                             badge
                                             ${
-                                                item.category === "fixed"
-
+                                                item.category ===
+                                                    "fixed"
                                                     ? "badge-fixed"
-
                                                     : "badge-residuary"
                                             }
                                         ">
 
                                             ${
-                                                item.category === "fixed"
-
+                                                item.category ===
+                                                    "fixed"
                                                     ? "Fixed Share"
-
                                                     : "Residuary"
                                             }
 
@@ -957,19 +1196,23 @@ function renderFaraidResult(result) {
 
                                         <strong class="exact-share">
 
-                                            ${exactShare}
+                                            ${escapeHTML(
+                                                exactShare
+                                            )}
 
                                         </strong>
 
                                         ${
                                             item.fraction
-
-                                                ? `<small class="decimal-share">
-                                                    (${fractionDecimalDisplay(
-                                                        item.fraction
-                                                    )})
-                                                   </small>`
-
+                                                ? `
+                                                    <small class="decimal-share">
+                                                        (
+                                                        ${fractionDecimalDisplay(
+                                                            item.fraction
+                                                        )}
+                                                        )
+                                                    </small>
+                                                `
                                                 : ""
                                         }
 
@@ -996,16 +1239,45 @@ function renderFaraidResult(result) {
 
         `;
 
+    } else {
+
+        html += `
+
+            <div class="notice notice-warning">
+
+                <strong>
+                    No supported eligible heirs were identified.
+                </strong>
+
+                <p>
+                    Review the surviving-family information and
+                    any specialist-review flags.
+                </p>
+
+            </div>
+
+        `;
+
     }
 
 
-    /*
-     * ------------------------------------------------------
-     * SHARE CALCULATION
-     * ------------------------------------------------------
-     */
+    /* =====================================================
+       SHARE CALCULATION
+    ===================================================== */
 
     if (calculation) {
+
+        const fixedShares =
+            Array.isArray(
+                calculation.fixedShares
+            )
+                ? calculation.fixedShares
+                : [];
+
+
+        const residuary =
+            calculation.residuary || null;
+
 
         html += `
 
@@ -1015,33 +1287,28 @@ function renderFaraidResult(result) {
                     Share Calculation
                 </h4>
 
-
                 <div class="calculation-flow">
-
-
-                    <!-- STEP 1 -->
 
                     <div class="calculation-card">
 
                         <div class="calculation-card-header">
-
                             Step 1: Fixed Shares
-
                         </div>
 
                         <div class="calculation-card-body">
 
                             ${
-                                calculation.fixedShares.length
+                                fixedShares.length
 
-                                    ? calculation.fixedShares
+                                    ? fixedShares
                                         .map(item => `
 
                                             <div class="calculation-line">
 
                                                 <span>
                                                     ${escapeHTML(
-                                                        item.heir
+                                                        item.heir ||
+                                                        "Heir"
                                                     )}
                                                 </span>
 
@@ -1090,14 +1357,10 @@ function renderFaraidResult(result) {
                     </div>
 
 
-                    <!-- STEP 2 -->
-
                     <div class="calculation-card">
 
                         <div class="calculation-card-header">
-
                             Step 2: Remainder
-
                         </div>
 
                         <div class="calculation-card-body">
@@ -1152,7 +1415,7 @@ function renderFaraidResult(result) {
 
 
                     ${
-                        calculation.residuary
+                        residuary
 
                             ? `
 
@@ -1161,16 +1424,11 @@ function renderFaraidResult(result) {
                                 </div>
 
 
-                                <!-- STEP 3 -->
-
                                 <div class="calculation-card">
 
                                     <div class="calculation-card-header">
-
                                         Step 3: Residuary Distribution
-
                                     </div>
-
 
                                     <div class="calculation-card-body">
 
@@ -1182,9 +1440,7 @@ function renderFaraidResult(result) {
 
                                             <strong>
                                                 ${fractionDisplay(
-                                                    calculation
-                                                        .residuary
-                                                        .residue
+                                                    residuary.residue
                                                 )}
                                             </strong>
 
@@ -1195,13 +1451,22 @@ function renderFaraidResult(result) {
 
                                             <span>
                                                 Units
-                                                (${calculation.residuary.sons} sons × 2)
+                                                (
+                                                ${residuary.sons || 0}
+                                                sons × 2
+                                                )
                                                 +
-                                                (${calculation.residuary.daughters} daughters × 1)
+                                                (
+                                                ${residuary.daughters || 0}
+                                                daughters × 1
+                                                )
                                             </span>
 
                                             <strong>
-                                                ${calculation.residuary.units}
+                                                ${escapeHTML(
+                                                    residuary.units ??
+                                                    "—"
+                                                )}
                                                 units
                                             </strong>
 
@@ -1216,9 +1481,7 @@ function renderFaraidResult(result) {
 
                                             <strong>
                                                 ${fractionDisplay(
-                                                    calculation
-                                                        .residuary
-                                                        .valuePerUnit
+                                                    residuary.valuePerUnit
                                                 )}
                                             </strong>
 
@@ -1242,72 +1505,63 @@ function renderFaraidResult(result) {
                                 </div>
 
 
-                                <!-- STEP 4 -->
-
                                 <div class="calculation-card">
 
                                     <div class="calculation-card-header">
-
-                                        Final Entitlements
-
+                                        Step 4: Final Entitlements
                                     </div>
-
 
                                     <div class="calculation-card-body">
 
-                                        ${calculation
-                                            .residuary
-                                            .sons > 0
+                                        ${
+                                            residuary.sons > 0
 
-                                            ? `
+                                                ? `
 
-                                                <div class="calculation-line">
+                                                    <div class="calculation-line">
 
-                                                    <span>
-                                                        Each Son
-                                                    </span>
+                                                        <span>
+                                                            Each Son
+                                                        </span>
 
-                                                    <strong>
-                                                        ${fractionDisplay(
-                                                            calculation
-                                                                .residuary
-                                                                .individualSonShare
-                                                        )}
-                                                    </strong>
+                                                        <strong>
+                                                            ${fractionDisplay(
+                                                                residuary
+                                                                    .individualSonShare
+                                                            )}
+                                                        </strong>
 
-                                                </div>
+                                                    </div>
 
-                                            `
+                                                `
 
-                                            : ""
+                                                : ""
                                         }
 
 
-                                        ${calculation
-                                            .residuary
-                                            .daughters > 0
+                                        ${
+                                            residuary.daughters > 0
 
-                                            ? `
+                                                ? `
 
-                                                <div class="calculation-line">
+                                                    <div class="calculation-line">
 
-                                                    <span>
-                                                        Each Daughter
-                                                    </span>
+                                                        <span>
+                                                            Each Daughter
+                                                        </span>
 
-                                                    <strong>
-                                                        ${fractionDisplay(
-                                                            calculation
-                                                                .residuary
-                                                                .individualDaughterShare
-                                                        )}
-                                                    </strong>
+                                                        <strong>
+                                                            ${fractionDisplay(
+                                                                residuary
+                                                                    .individualDaughterShare
+                                                            )}
+                                                        </strong>
 
-                                                </div>
+                                                    </div>
 
-                                            `
+                                                `
 
-                                            : ""
+                                                : ""
                                         }
 
 
@@ -1333,12 +1587,14 @@ function renderFaraidResult(result) {
 
                             : `
 
+                                <div class="calculation-arrow">
+                                    →
+                                </div>
+
                                 <div class="calculation-card">
 
                                     <div class="calculation-card-header">
-
                                         Remaining Estate
-
                                     </div>
 
                                     <div class="calculation-card-body">
@@ -1373,11 +1629,9 @@ function renderFaraidResult(result) {
     }
 
 
-    /*
-     * ------------------------------------------------------
-     * EXCLUDED HEIRS
-     * ------------------------------------------------------
-     */
+    /* =====================================================
+       EXCLUDED HEIRS
+    ===================================================== */
 
     if (excluded.length) {
 
@@ -1423,7 +1677,8 @@ function renderFaraidResult(result) {
                                         ">
 
                                             ${escapeHTML(
-                                                item.heir
+                                                item.heir ||
+                                                "Heir"
                                             )}
 
                                         </span>
@@ -1433,7 +1688,8 @@ function renderFaraidResult(result) {
                                     <td>
 
                                         ${escapeHTML(
-                                            item.reason
+                                            item.reason ||
+                                            "Excluded under the applicable rule."
                                         )}
 
                                     </td>
@@ -1455,11 +1711,9 @@ function renderFaraidResult(result) {
     }
 
 
-    /*
-     * ------------------------------------------------------
-     * REVIEW FLAGS
-     * ------------------------------------------------------
-     */
+    /* =====================================================
+       REVIEW FLAGS
+    ===================================================== */
 
     if (reviewFlags.length) {
 
@@ -1481,7 +1735,9 @@ function renderFaraidResult(result) {
 
                         <li>
                             ${escapeHTML(
-                                flag.message
+                                flag.message ||
+                                flag.code ||
+                                "Specialist review required."
                             )}
                         </li>
 
@@ -1496,327 +1752,74 @@ function renderFaraidResult(result) {
     }
 
 
-    /*
-     * ------------------------------------------------------
-     * IMPORTANT DISCLAIMER
-     * ------------------------------------------------------
-     */
+    /* =====================================================
+       IMPORTANT DISCLAIMER
+    ===================================================== */
 
     html += `
 
-            <div class="
-                notice
-                notice-info
-                faraid-important
-            ">
+        <div class="
+            notice
+            notice-info
+            faraid-important
+        ">
 
-                <strong>
-                    Important:
-                </strong>
+            <strong>
+                Important:
+            </strong>
 
-                This is a Faraid framework, not a final legal
-                or scholarly determination. Fractions refer to
-                the distributable estate after applicable debts,
-                funeral/burial expenses and valid obligations
-                have been settled.
+            This is a Faraid framework, not a final legal
+            or scholarly determination. Fractions refer to
+            the distributable estate after applicable debts,
+            funeral/burial expenses and valid obligations
+            have been settled.
+
+        </div>
+
+
+        <details class="faraid-notes">
+
+            <summary>
+                Notes & Disclaimers
+            </summary>
+
+            <div class="faraid-notes-body">
+
+                <p>
+                    The system is designed to establish a
+                    structured inheritance framework and
+                    property-distribution blueprint.
+                </p>
+
+                <p>
+                    It does not replace a qualified Islamic
+                    scholar, estate administrator, lawyer,
+                    court or other competent authority.
+                </p>
+
+                <p>
+                    Complex cases are deliberately flagged
+                    for specialist review rather than being
+                    silently resolved.
+                </p>
 
             </div>
 
+        </details>
 
-            <details class="faraid-notes">
-
-                <summary>
-                    Notes & Disclaimers
-                </summary>
-
-                <div class="faraid-notes-body">
-
-                    <p>
-                        The system is designed to establish a
-                        structured inheritance framework and
-                        property-distribution blueprint.
-                    </p>
-
-                    <p>
-                        It does not replace a qualified Islamic
-                        scholar, estate administrator, lawyer,
-                        court or other competent authority.
-                    </p>
-
-                    <p>
-                        Complex cases are deliberately flagged
-                        for specialist review rather than being
-                        silently resolved.
-                    </p>
-
-                </div>
-
-            </details>
-
-
-        </div>
+    </div>
 
     `;
 
 
-    $("faraidResult").innerHTML =
+    resultContainer.innerHTML =
         html;
 }
 
 
 /* =========================================================
-   FRACTION DISPLAY HELPERS
-========================================================= */
-
-function fractionDisplay(value) {
-
-    if (!value) {
-        return "—";
-    }
-
-    return `${value.numerator}/${value.denominator}`;
-}
-
-
-function fractionDecimalDisplay(value) {
-
-    if (!value) {
-        return "";
-    }
-
-    return (
-        value.numerator /
-        value.denominator
-    ).toFixed(6);
-}
-
-
-    const eligible =
-        result.eligible || [];
-
-
-    const excluded =
-        result.excluded || [];
-
-
-    const reviewFlags =
-        result.reviewFlags || [];
-
-
-    let html = `
-
-        <div class="card">
-
-            <h3>
-                Faraid Framework Result
-            </h3>
-
-            <p>
-                <strong>Status:</strong>
-                ${escapeHTML(result.status)}
-            </p>
-
-    `;
-
-
-    if (eligible.length) {
-
-        html += `
-
-            <h4>
-                Eligible / Supported Heirs
-            </h4>
-
-            <div class="table-wrapper">
-
-                <table>
-
-                    <thead>
-
-                        <tr>
-                            <th>Heir</th>
-                            <th>Category</th>
-                            <th>Share</th>
-                            <th>Reason</th>
-                        </tr>
-
-                    </thead>
-
-                    <tbody>
-
-                        ${eligible.map(item => `
-
-                            <tr>
-
-                                <td>
-                                    <strong>
-                                        ${escapeHTML(item.heir)}
-                                    </strong>
-
-                                    ${
-                                        item.count > 1
-                                            ? `<br>
-                                               <small>
-                                                   ${item.count} persons
-                                               </small>`
-                                            : ""
-                                    }
-                                </td>
-
-                                <td>
-                                    <span class="
-                                        badge
-                                        ${
-                                            item.category === "fixed"
-                                                ? "badge-fixed"
-                                                : "badge-residuary"
-                                        }
-                                    ">
-                                        ${escapeHTML(
-                                            item.category
-                                        )}
-                                    </span>
-                                </td>
-
-                                <td>
-                                    <strong>
-                                        ${escapeHTML(item.share)}
-                                    </strong>
-                                </td>
-
-                                <td>
-                                    ${escapeHTML(item.reason)}
-                                </td>
-
-                            </tr>
-
-                        `).join("")}
-
-                    </tbody>
-
-                </table>
-
-            </div>
-
-        `;
-
-    }
-
-
-    if (excluded.length) {
-
-        html += `
-
-            <h4>
-                Excluded Heirs
-            </h4>
-
-            <div class="table-wrapper">
-
-                <table>
-
-                    <thead>
-                        <tr>
-                            <th>Heir</th>
-                            <th>Reason</th>
-                        </tr>
-                    </thead>
-
-                    <tbody>
-
-                        ${excluded.map(item => `
-
-                            <tr>
-
-                                <td>
-                                    <span class="
-                                        badge
-                                        badge-excluded
-                                    ">
-                                        ${escapeHTML(item.heir)}
-                                    </span>
-                                </td>
-
-                                <td>
-                                    ${escapeHTML(item.reason)}
-                                </td>
-
-                            </tr>
-
-                        `).join("")}
-
-                    </tbody>
-
-                </table>
-
-            </div>
-
-        `;
-
-    }
-
-
-    if (reviewFlags.length) {
-
-        html += `
-
-            <div class="
-                notice
-                notice-warning
-            ">
-
-                <strong>
-                    Specialist Review Required
-                </strong>
-
-                <ul>
-
-                    ${reviewFlags.map(flag => `
-
-                        <li>
-                            ${escapeHTML(flag.message)}
-                        </li>
-
-                    `).join("")}
-
-                </ul>
-
-            </div>
-
-        `;
-
-    }
-
-
-    html += `
-
-            <div class="
-                notice
-                notice-info
-            ">
-
-                <strong>
-                    Important:
-                </strong>
-
-                This result is a Faraid framework,
-                not a final legal or scholarly determination.
-
-            </div>
-
-        </div>
-
-    `;
-
-
-    $("faraidResult").innerHTML =
-        html;
-}
-
-
-/* --------------------------------------------------
    ACTION TRACKER
--------------------------------------------------- */
+========================================================= */
 
 function buildActions() {
 
@@ -1829,6 +1832,7 @@ function buildActions() {
 
     const checks =
         collectChecks([
+
             "ownership",
             "jointOwnership",
             "assetSearch",
@@ -1839,6 +1843,7 @@ function buildActions() {
             "heirNotification",
             "settlementAgreement",
             "legalTransfer"
+
         ]);
 
 
@@ -1961,7 +1966,11 @@ function buildActions() {
     }
 
 
-    if (!currentCase.faraidResult) {
+    const faraidResult =
+        currentCase.faraidResult;
+
+
+    if (!faraidResult) {
 
         actions.push({
 
@@ -1979,8 +1988,11 @@ function buildActions() {
 
 
     if (
-        currentCase.faraidResult &&
-        currentCase.faraidResult.reviewFlags.length
+        faraidResult &&
+        Array.isArray(
+            faraidResult.reviewFlags
+        ) &&
+        faraidResult.reviewFlags.length
     ) {
 
         actions.push({
@@ -2089,13 +2101,21 @@ function buildActions() {
 
 function renderActions() {
 
+    const container =
+        $("actionsList");
+
+    if (!container) {
+        return;
+    }
+
+
     const actions =
         buildActions();
 
 
     if (!actions.length) {
 
-        $("actionsList").innerHTML = `
+        container.innerHTML = `
 
             <div class="
                 notice
@@ -2113,51 +2133,64 @@ function renderActions() {
         `;
 
         return;
-
     }
 
 
-    $("actionsList").innerHTML = `
+    container.innerHTML = `
 
         <div class="action-list">
 
-            ${actions.map(action => `
+            ${actions.map(action => {
 
-                <div class="action-item">
+                const statusClass =
+                    action.status === "review"
+                        ? "review"
+                        : action.status === "open"
+                            ? "excluded"
+                            : "residuary";
 
-                    <span class="
-                        action-dot
-                        ${escapeHTML(action.status)}
-                    "></span>
 
-                    <div>
+                return `
 
-                        <h4>
-                            ${escapeHTML(action.title)}
-                        </h4>
+                    <div class="action-item">
 
-                        <p>
-                            ${escapeHTML(action.description)}
-                        </p>
+                        <span class="
+                            action-dot
+                            ${escapeHTML(
+                                action.status
+                            )}
+                        "></span>
+
+                        <div>
+
+                            <h4>
+                                ${escapeHTML(
+                                    action.title
+                                )}
+                            </h4>
+
+                            <p>
+                                ${escapeHTML(
+                                    action.description
+                                )}
+                            </p>
+
+                        </div>
+
+                        <span class="
+                            action-status
+                            badge-${statusClass}
+                        ">
+                            ${escapeHTML(
+                                action.status.toUpperCase()
+                            )}
+                        </span>
 
                     </div>
 
-                    <span class="
-                        action-status
-                        badge-${action.status === "review"
-                            ? "review"
-                            : action.status === "open"
-                                ? "excluded"
-                                : "residuary"}
-                    ">
-                        ${escapeHTML(
-                            action.status.toUpperCase()
-                        )}
-                    </span>
+                `;
 
-                </div>
-
-            `).join("")}
+            }).join("")}
 
         </div>
 
@@ -2165,9 +2198,9 @@ function renderActions() {
 }
 
 
-/* --------------------------------------------------
+/* =========================================================
    DASHBOARD
--------------------------------------------------- */
+========================================================= */
 
 function updateDashboard() {
 
@@ -2181,20 +2214,35 @@ function updateDashboard() {
 
     const heirCount =
         [
+
             family.husband,
+
             family.wives,
+
             family.sons,
+
             family.daughters,
+
             family.father,
+
             family.mother,
+
             family.paternalGrandfather,
+
             family.maternalGrandmother,
+
             family.fullBrothers,
+
             family.fullSisters,
+
             family.maternalSiblings,
+
             family.sonGrandchildren
+
         ]
-        .filter(value => Boolean(value))
+        .filter(value =>
+            Boolean(value)
+        )
         .length;
 
 
@@ -2202,49 +2250,80 @@ function updateDashboard() {
         buildActions();
 
 
-    $("assetCount").textContent =
-        assets.length;
+    setElementText(
+        "assetCount",
+        assets.length
+    );
 
 
-    $("heirCount").textContent =
-        heirCount;
+    setElementText(
+        "heirCount",
+        heirCount
+    );
 
 
-    $("openActionCount").textContent =
-        actions.length;
+    setElementText(
+        "openActionCount",
+        actions.length
+    );
 
 
-    $("reviewFlagCount").textContent =
-        currentCase.faraidResult
-            ? currentCase.faraidResult.reviewFlags.length
-            : 0;
+    setElementText(
+        "reviewFlagCount",
+
+        currentCase.faraidResult &&
+        Array.isArray(
+            currentCase.faraidResult.reviewFlags
+        )
+
+            ? currentCase
+                .faraidResult
+                .reviewFlags
+                .length
+
+            : 0
+    );
 
 
     const status =
         actions.length === 0
+
             ? "Ready for completion"
+
             : currentCase.faraidResult
+
                 ? "Under review"
+
                 : "Planning";
 
 
-    $("caseStatus").textContent =
-        status;
+    setElementText(
+        "caseStatus",
+        status
+    );
 
 
     renderProgress();
-
 }
 
 
-/* --------------------------------------------------
+/* =========================================================
    PROGRESS
--------------------------------------------------- */
+========================================================= */
 
 function renderProgress() {
 
+    const container =
+        $("progress");
+
+    if (!container) {
+        return;
+    }
+
+
     const checks =
         collectChecks([
+
             "ownership",
             "jointOwnership",
             "assetSearch",
@@ -2254,6 +2333,7 @@ function renderProgress() {
             "scholarReview",
             "settlementAgreement",
             "legalTransfer"
+
         ]);
 
 
@@ -2324,29 +2404,45 @@ function renderProgress() {
     ];
 
 
-    $("progress").innerHTML =
-        labels.map((stage, index) => `
+    container.innerHTML =
+        labels.map(
+            (stage, index) => `
 
-            <div class="
-                progress-item
-                ${stage.complete ? "complete" : "active"}
-            ">
+                <div class="
+                    progress-item
+                    ${stage.complete
+                        ? "complete"
+                        : "active"}
+                ">
 
-                ${index + 1}.
-                ${escapeHTML(stage.name)}
+                    ${index + 1}.
+                    ${escapeHTML(
+                        stage.name
+                    )}
 
-            </div>
+                </div>
 
-        `).join("");
-
+            `
+        ).join("");
 }
 
 
-/* --------------------------------------------------
+/* =========================================================
    BLUEPRINT
--------------------------------------------------- */
+========================================================= */
 
 function createBlueprint() {
+
+    const output =
+        $("blueprintOutput");
+
+    if (!output) {
+
+        throw new Error(
+            "The Blueprint output container (#blueprintOutput) could not be found."
+        );
+    }
+
 
     currentCase =
         collectCaseFromUI();
@@ -2356,18 +2452,24 @@ function createBlueprint() {
         buildActions();
 
 
-    $("blueprintOutput").innerHTML =
+    output.innerHTML =
         generateBlueprint(
             currentCase,
             actions
         );
 
+
+    output.scrollIntoView({
+        behavior: "smooth",
+        block: "start"
+    });
+
 }
 
 
-/* --------------------------------------------------
+/* =========================================================
    SAVE
--------------------------------------------------- */
+========================================================= */
 
 function handleSave() {
 
@@ -2387,12 +2489,13 @@ function handleSave() {
 
     updateDashboard();
 
+    renderActions();
 }
 
 
-/* --------------------------------------------------
+/* =========================================================
    LOAD
--------------------------------------------------- */
+========================================================= */
 
 function handleLoad() {
 
@@ -2407,7 +2510,6 @@ function handleLoad() {
         );
 
         return;
-
     }
 
 
@@ -2437,46 +2539,61 @@ function handleLoad() {
     alert(
         "Saved case loaded successfully."
     );
-
 }
 
 
-/* --------------------------------------------------
-   APPLY SAVED CASE
--------------------------------------------------- */
+/* =========================================================
+   APPLY SAVED CASE TO UI
+========================================================= */
 
-function applyCaseToUI(data) {
+function applyCaseToUI(data = {}) {
 
-    $("caseName").value =
-        data.caseName || "";
-
-
-    $("deceasedName").value =
-        data.deceased?.name || "";
+    setFieldValue(
+        "caseName",
+        data.caseName
+    );
 
 
-    $("deathDate").value =
-        data.deceased?.deathDate || "";
+    setFieldValue(
+        "deceasedName",
+        data.deceased?.name
+    );
 
 
-    $("jurisdiction").value =
-        data.deceased?.jurisdiction || "";
+    setFieldValue(
+        "deathDate",
+        data.deceased?.deathDate
+    );
 
 
-    $("administrator").value =
-        data.deceased?.administrator || "";
+    setFieldValue(
+        "jurisdiction",
+        data.deceased?.jurisdiction
+    );
 
 
-    $("debts").value =
-        data.obligations?.debts || "";
+    setFieldValue(
+        "administrator",
+        data.deceased?.administrator
+    );
 
 
-    $("funeralExpenses").value =
-        data.obligations?.funeralExpenses || "";
+    setFieldValue(
+        "debts",
+        data.obligations?.debts
+    );
 
 
-    $("wasiyyah").value =
-        data.obligations?.wasiyyah || "";
+    setFieldValue(
+        "funeralExpenses",
+        data.obligations?.funeralExpenses
+    );
+
+
+    setFieldValue(
+        "wasiyyah",
+        data.obligations?.wasiyyah
+    );
 
 
     const family =
@@ -2555,16 +2672,22 @@ function applyCaseToUI(data) {
     );
 
 
-    $("settlementNotes").value =
-        data.settlement?.notes || "";
+    setFieldValue(
+        "settlementNotes",
+        data.settlement?.notes
+    );
 
 
-    $("scholarReviewer").value =
-        data.settlement?.scholarReviewer || "";
+    setFieldValue(
+        "scholarReviewer",
+        data.settlement?.scholarReviewer
+    );
 
 
-    $("legalReviewer").value =
-        data.settlement?.legalReviewer || "";
+    setFieldValue(
+        "legalReviewer",
+        data.settlement?.legalReviewer
+    );
 
 
     applyChecks(
@@ -2577,57 +2700,123 @@ function applyCaseToUI(data) {
     );
 
 
-    $("assetsContainer").innerHTML =
-        "";
+    /*
+     * Rebuild asset rows.
+     */
+
+    const assetsContainer =
+        $("assetsContainer");
+
+    if (assetsContainer) {
+
+        assetsContainer.innerHTML =
+            "";
+
+        assetCounter = 0;
 
 
-    assetCounter = 0;
+        const assets =
+            Array.isArray(
+                data.estate?.assets
+            )
+                ? data.estate.assets
+                : [];
 
 
-    (data.estate?.assets || [])
-        .forEach(addAsset);
+        assets.forEach(
+            addAsset
+        );
 
 
-    $("propertyPlansContainer").innerHTML =
-        "";
+        /*
+         * Always keep one empty row available.
+         */
+
+        if (!assets.length) {
+            addAsset();
+        }
+    }
 
 
-    propertyCounter = 0;
+    /*
+     * Rebuild property plan rows.
+     */
+
+    const propertyContainer =
+        $("propertyPlansContainer");
+
+    if (propertyContainer) {
+
+        propertyContainer.innerHTML =
+            "";
+
+        propertyCounter = 0;
 
 
-    (data.propertyPlans || [])
-        .forEach(addPropertyPlan);
+        const plans =
+            Array.isArray(
+                data.propertyPlans
+            )
+                ? data.propertyPlans
+                : [];
 
+
+        plans.forEach(
+            addPropertyPlan
+        );
+
+
+        if (!plans.length) {
+            addPropertyPlan();
+        }
+    }
+}
+
+
+function setFieldValue(id, value) {
+
+    const element =
+        $(id);
+
+    if (element) {
+
+        element.value =
+            value ?? "";
+    }
 }
 
 
 function setValue(id, value) {
 
-    if ($(id)) {
+    const element =
+        $(id);
 
-        $(id).value =
+    if (element) {
+
+        element.value =
             value ?? 0;
-
     }
-
 }
 
 
 function setSelect(id, value) {
 
-    if ($(id)) {
+    const element =
+        $(id);
 
-        $(id).value =
-            value ? "1" : "0";
+    if (element) {
 
+        element.value =
+            value
+                ? "1"
+                : "0";
     }
-
 }
 
 
-/* --------------------------------------------------
+/* =========================================================
    NEW CASE
--------------------------------------------------- */
+========================================================= */
 
 function handleNewCase() {
 
@@ -2650,17 +2839,21 @@ function handleNewCase() {
 
 
     location.reload();
-
 }
 
 
-/* --------------------------------------------------
-   APPLICATION INITIALISATION
--------------------------------------------------- */
+/* =========================================================
+   EVENT BINDING
+========================================================= */
 
-function bindClick(id, handler) {
+function bindClick(
+    id,
+    handler
+) {
 
-    const element = $(id);
+    const element =
+        $(id);
+
 
     if (!element) {
 
@@ -2671,20 +2864,122 @@ function bindClick(id, handler) {
         return;
     }
 
+
     element.addEventListener(
         "click",
-        handler
+        event => {
+
+            try {
+
+                handler(event);
+
+            } catch (error) {
+
+                console.error(
+                    `Faraid Planner error in #${id}:`,
+                    error
+                );
+
+
+                showApplicationError(
+                    error
+                );
+            }
+
+        }
     );
 }
 
 
-function initialiseApplication() {
+/* =========================================================
+   ERROR DISPLAY
+========================================================= */
+
+function showApplicationError(error) {
+
+    console.error(
+        "Faraid Planner application error:",
+        error
+    );
+
+
+    const message =
+        error?.message ||
+        String(error);
+
 
     /*
-     * --------------------------------------------------
-     * BUTTONS
-     * --------------------------------------------------
+     * Faraid errors go to the Faraid result area.
      */
+
+    const faraidResult =
+        $("faraidResult");
+
+
+    if (
+        faraidResult &&
+        (
+            message.toLowerCase().includes(
+                "faraid"
+            ) ||
+            message.toLowerCase().includes(
+                "heir"
+            ) ||
+            message.toLowerCase().includes(
+                "spouse"
+            )
+        )
+    ) {
+
+        faraidResult.innerHTML = `
+
+            <div class="
+                notice
+                notice-warning
+            ">
+
+                <strong>
+                    Unable to calculate Faraid
+                </strong>
+
+                <p>
+                    ${escapeHTML(
+                        message
+                    )}
+                </p>
+
+            </div>
+
+        `;
+
+        return;
+    }
+
+
+    /*
+     * Otherwise use a simple alert.
+     */
+
+    alert(
+        `Faraid Planner error: ${message}`
+    );
+}
+
+
+/* =========================================================
+   INITIAL APPLICATION SETUP
+========================================================= */
+
+function initialiseApplication() {
+
+    console.log(
+        "Faraid Planner: initialising..."
+    );
+
+
+    /* -----------------------------------------------------
+       BUTTONS
+    ----------------------------------------------------- */
 
     bindClick(
         "addAssetBtn",
@@ -2700,56 +2995,7 @@ function initialiseApplication() {
 
     bindClick(
         "determineFaraidBtn",
-        () => {
-
-            try {
-
-                determineFaraid();
-
-            } catch (error) {
-
-                console.error(
-                    "Faraid calculation error:",
-                    error
-                );
-
-                const resultElement =
-                    $("faraidResult");
-
-                if (resultElement) {
-
-                    resultElement.innerHTML = `
-
-                        <div class="notice notice-warning">
-
-                            <strong>
-                                Unable to calculate Faraid
-                            </strong>
-
-                            <p>
-                                The system encountered an error
-                                while processing this case.
-                            </p>
-
-                            <details>
-
-                                <summary>
-                                    Technical error
-                                </summary>
-
-                                <pre>${escapeHTML(
-                                    error.message ||
-                                    String(error)
-                                )}</pre>
-
-                            </details>
-
-                        </div>
-
-                    `;
-                }
-            }
-        }
+        () => determineFaraid()
     );
 
 
@@ -2789,11 +3035,43 @@ function initialiseApplication() {
     );
 
 
-    /*
-     * --------------------------------------------------
-     * REMOVE DYNAMIC ASSETS / PROPERTY PLANS
-     * --------------------------------------------------
-     */
+    /* -----------------------------------------------------
+       INITIAL ASSET / PROPERTY ROWS
+    ----------------------------------------------------- */
+
+    const assetsContainer =
+        $("assetsContainer");
+
+
+    if (
+        assetsContainer &&
+        !assetsContainer.querySelector(
+            ".asset-row"
+        )
+    ) {
+
+        addAsset();
+    }
+
+
+    const propertyContainer =
+        $("propertyPlansContainer");
+
+
+    if (
+        propertyContainer &&
+        !propertyContainer.querySelector(
+            ".property-row"
+        )
+    ) {
+
+        addPropertyPlan();
+    }
+
+
+    /* -----------------------------------------------------
+       DYNAMIC REMOVE BUTTONS
+    ----------------------------------------------------- */
 
     document.addEventListener(
         "click",
@@ -2803,7 +3081,13 @@ function initialiseApplication() {
                 event.target;
 
 
+            if (!target) {
+                return;
+            }
+
+
             if (
+                target.classList &&
                 target.classList.contains(
                     "remove-asset"
                 )
@@ -2814,17 +3098,22 @@ function initialiseApplication() {
                         ".asset-row"
                     );
 
+
                 if (row) {
                     row.remove();
                 }
 
+
                 updateDashboard();
+
+                renderActions();
 
                 return;
             }
 
 
             if (
+                target.classList &&
                 target.classList.contains(
                     "remove-property"
                 )
@@ -2835,11 +3124,15 @@ function initialiseApplication() {
                         ".property-row"
                     );
 
+
                 if (row) {
                     row.remove();
                 }
 
+
                 updateDashboard();
+
+                renderActions();
 
             }
 
@@ -2847,27 +3140,50 @@ function initialiseApplication() {
     );
 
 
-    /*
-     * --------------------------------------------------
-     * AUTOMATIC CASE STATE UPDATES
-     * --------------------------------------------------
-     */
+    /* -----------------------------------------------------
+       INPUT EVENTS
+    ----------------------------------------------------- */
 
     document.addEventListener(
         "input",
-        () => {
+        event => {
 
             try {
+
+                const target =
+                    event.target;
+
+
+                /*
+                 * If a family field changes, the old Faraid
+                 * result is no longer valid.
+                 */
+
+                if (
+                    target &&
+                    target.id &&
+                    FARAID_FIELD_IDS.has(
+                        target.id
+                    )
+                ) {
+
+                    invalidateFaraidResult();
+
+                }
+
 
                 currentCase =
                     collectCaseFromUI();
 
+
                 updateDashboard();
+
+                renderActions();
 
             } catch (error) {
 
                 console.warn(
-                    "Case update warning:",
+                    "Case input update warning:",
                     error
                 );
 
@@ -2876,22 +3192,46 @@ function initialiseApplication() {
         }
     );
 
+
+    /* -----------------------------------------------------
+       CHANGE EVENTS
+    ----------------------------------------------------- */
 
     document.addEventListener(
         "change",
-        () => {
+        event => {
 
             try {
+
+                const target =
+                    event.target;
+
+
+                if (
+                    target &&
+                    target.id &&
+                    FARAID_FIELD_IDS.has(
+                        target.id
+                    )
+                ) {
+
+                    invalidateFaraidResult();
+
+                }
+
 
                 currentCase =
                     collectCaseFromUI();
 
+
                 updateDashboard();
+
+                renderActions();
 
             } catch (error) {
 
                 console.warn(
-                    "Case change warning:",
+                    "Case change update warning:",
                     error
                 );
 
@@ -2901,30 +3241,40 @@ function initialiseApplication() {
     );
 
 
-    /*
-     * --------------------------------------------------
-     * INITIAL UI
-     * --------------------------------------------------
-     */
+    /* -----------------------------------------------------
+       INITIAL STATE
+    ----------------------------------------------------- */
+
+    currentCase =
+        collectCaseFromUI();
+
 
     updateDashboard();
 
     renderActions();
 
+
+    console.log(
+        "Faraid Planner: initialisation complete."
+    );
 }
 
 
-/* --------------------------------------------------
+/* =========================================================
    START APPLICATION
--------------------------------------------------- */
+========================================================= */
 
 if (
-    document.readyState === "loading"
+    document.readyState ===
+    "loading"
 ) {
 
     document.addEventListener(
         "DOMContentLoaded",
-        initialiseApplication
+        initialiseApplication,
+        {
+            once: true
+        }
     );
 
 } else {
